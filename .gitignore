@@ -1,0 +1,57 @@
+# =========================
+# AMBIENTE
+# =========================
+.venv/
+venv/
+.env
+
+# =========================
+# PYTHON CACHE
+# =========================
+__pycache__/
+*.pyc
+*.pyo
+
+# =========================
+# BUILD / PACKAGING
+# =========================
+*.egg-info/
+dist/
+build/
+
+# =========================
+# DADOS (CRÍTICO)
+# =========================
+data/temp/*
+data/support/*
+data/*.csv
+data/*.xlsx
+data/*.xls
+
+# mantém a estrutura de pastas, não os dados
+!data/.gitkeep
+!data/support/.gitkeep
+!data/temp/.gitkeep
+
+# =========================
+# LOGS
+# =========================
+*.log
+
+# =========================
+# IDE
+# =========================
+.vscode/
+.idea/
+
+# =========================
+# SISTEMA
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# DADOS SENSÍVEIS DE NEGÓCIO (nomes/categorias reais)
+# =========================
+src/lavesecexpress_etl/persistence/gold_overridedata.py
+src/lavesecexpress_etl/persistence/rules_detalhestransacoes.py
