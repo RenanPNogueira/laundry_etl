@@ -93,7 +93,7 @@ Configure todas as variáveis abaixo antes de executar (copie `.env.example` par
 | `BANK2_EMAIL_SENDER` | Remetente esperado dos e-mails do Banco 2 | `no_reply@banco2.com.br` |
 | `BANK2_EMAIL_SUBJECT` | Assunto esperado dos e-mails do Banco 2 | `Seu relatório chegou!` |
 | `BANK2_REPORT_DESTINATION_EMAIL` | E-mail destino informado no portal do Banco 2 | `lavanderia@gmail.com` |
-| `BANK2_LOGIN_URL` | URL de login/home do Banco 2 | `<definido-no-env>` |
+| `BANK2_LOGIN_URL` | URL de login/home do Banco 2 | Definido no `.env` |
 
 > **Atenção:** Para o Gmail, `BUSINESS_MAIL_PSWD` deve ser uma **Senha de App** gerada em Conta Google → Segurança → Senhas de app. A senha normal da conta não funciona com IMAP.
 
@@ -237,7 +237,7 @@ gold      →  dimensões e fatos prontos para análise (TRUNCATE + INSERT a cad
 
 As transações financeiras (conta corrente e fatura de cartão) são categorizadas em duas etapas:
 
-1. **Regex automático** — padrões definidos em `persistence/regex_bank1_rules.py`, aplicados por prioridade ao texto da transação.
+1. **Regex automático** — padrões mantidos em um arquivo local não versionado, aplicados por prioridade ao texto da transação.
 2. **Override manual** — ajustes pontuais por `cd_transacao` (hash MD5 da transação), definidos em `persistence/gold_overridedata.py`.
 
 Para adicionar ou alterar uma categoria, edite o arquivo Python correspondente e reexecute o ETL.

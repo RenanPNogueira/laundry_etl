@@ -44,11 +44,13 @@ A definição de períodos deve ser feita por api_timestamp.py, enquanto a
 persistência deve ser feita pelos pipelines ou módulos de carga.
 """
 
-import os
 import requests
 from typing import List, Dict
 
-BASE_URL = os.getenv("LAUNDRY_SYSTEM_BASE_URL")
+from lavesecexpress_etl.config.settings import LAUNDRY_SYSTEM_CONFIG
+
+
+BASE_URL = LAUNDRY_SYSTEM_CONFIG["base_url"]
 
 #===
 # INTERNAL PAGINATION HANDLER
