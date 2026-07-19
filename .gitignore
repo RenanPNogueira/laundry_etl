@@ -55,3 +55,4 @@ Thumbs.db
 # =========================
 src/lavesecexpress_etl/persistence/gold_overridedata.py
 src/lavesecexpress_etl/persistence/rules_detalhestransacoes.py
+migrations/rename_tabelas_privacidade.sql
