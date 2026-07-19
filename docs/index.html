@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ETL · Lav &amp; Sec Express — Documentação</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  /* ============ TEMA (claro / escuro) ============ */
+  :root{
+    --bg:#eef0f4;
+    --canvas:#f3f4f7; --dot:#dde1e9;
+    --ink:#242b37; --muted:#697384; --faint:#8a94a4; --body-ink:#39424f;
+    --card:#ffffff; --card-bd:#e3e7ee; --card-sh:0 4px 16px rgba(28,39,60,.07);
+    --th-bg:#f7f8fb; --row-hover:#fafbfc; --hair:#eef1f5;
+    --code-bg:#f1f3f7; --code-bd:#e4e8ee; --code-ink:#33404d;
+    --wire:#9aa4b4; --wire-lbl:#4b5568;
+    --proc-ac:#586579;
+    --start:#0e9f6e; --start-bg:#e6f6ef;
+    --end:#bd8410; --end-bg:#fbf1d8;
+    --dec-bd:#dda224; --dec-fill:#fff8e6; --dec-ink:#8a5900; --dec-hl:#fff3cf;
+    --act-bd:#2f6fed; --act-bg:#eaf1fe; --act-ink:#1c47a0;
+    --mode-bd:#7c53e0; --mode-bg:#f2ecfd; --mode-ink:#5a34ad;
+    --stop-bd:#df4438; --stop-bg:#fdeae7; --stop-ink:#a1281e; --stop-note:#8f342b;
+    /* camadas */
+    --raw:#bf7833; --raw-bg:#f6ecdf;
+    --silver:#7c899e; --silver-bg:#edf0f4;
+    --rules:#178a7c; --rules-bg:#e2f3f0;
+    --gold:#b8901c; --gold-bg:#f8efd4; --gold-line:#dcb445; --gold-body:#4a4327;
+    --load-bd:#3f56cf; --load-bg:#ebeefc; --load-ink:#33429f;
+    --rebuild-bd:#d68a12; --rebuild-bg:#fdf2da; --rebuild-ink:#8a5a00;
+    /* fontes */
+    --fam-api:#128577; --fam-api-bg:#e4f4f1;
+    --fam-brw:#3f56cf; --fam-brw-bg:#ebeefc;
+    --fam-file:#c07d1c; --fam-file-bg:#fbf0dc;
+    --warn-bd:#d68a12; --warn-bg:#fdf2da; --warn-ink:#8a5a00;
+    --ok:#0e9f6e; --ok-bg:#e6f6ef;
+
+    --disp:'Space Grotesk',system-ui,sans-serif;
+    --body:'Inter',system-ui,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  body.dark{
+    --bg:#0e1320;
+    --canvas:#141a26; --dot:#232c3d;
+    --ink:#e7eaf0; --muted:#9aa4b4; --faint:#7a8598; --body-ink:#c4cede;
+    --card:#1a2130; --card-bd:#2a3344; --card-sh:0 6px 20px rgba(0,0,0,.45);
+    --th-bg:#1f2735; --row-hover:#212a3a; --hair:#273040;
+    --code-bg:#232c3d; --code-bd:#33415a; --code-ink:#cdd6e4;
+    --wire:#5f6b7e; --wire-lbl:#aab4c4;
+    --proc-ac:#8a94a4;
+    --start:#34d399; --start-bg:#0f2a20;
+    --end:#e0b34a; --end-bg:#2b2410;
+    --dec-bd:#e0b34a; --dec-fill:#2a2412; --dec-ink:#e9c96a; --dec-hl:#37301a;
+    --act-bd:#5b8def; --act-bg:#13233c; --act-ink:#a9c6f7;
+    --mode-bd:#a385f0; --mode-bg:#221a38; --mode-ink:#c9b6f7;
+    --stop-bd:#ef6a5f; --stop-bg:#2c1512; --stop-ink:#f3a89f; --stop-note:#f3a89f;
+    --raw:#d18f4e; --raw-bg:#2a1f12;
+    --silver:#9aa6ba; --silver-bg:#1f2530;
+    --rules:#2bb3a1; --rules-bg:#0f2621;
+    --gold:#d8ad30; --gold-bg:#2a2411; --gold-line:#5a4a1a; --gold-body:#e6d9a8;
+    --load-bd:#7d92f0; --load-bg:#141d33; --load-ink:#a9b6f7;
+    --rebuild-bd:#e0a94a; --rebuild-bg:#2a2210; --rebuild-ink:#e6c07a;
+    --fam-api:#22b3a1; --fam-api-bg:#0f2621;
+    --fam-brw:#7d92f0; --fam-brw-bg:#141d33;
+    --fam-file:#d69a3c; --fam-file-bg:#2a2211;
+    --warn-bd:#e0a94a; --warn-bg:#2a2210; --warn-ink:#e6c07a;
+    --ok:#34d399; --ok-bg:#0f2a20;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;font-family:var(--body);color:var(--ink);background:var(--bg);
+    transition:background .25s ease,color .25s ease}
+  body.flow{overflow:hidden}
+
+  /* ============ TOP BAR (global) ============ */
+  .bar{height:60px;display:flex;align-items:center;gap:16px;padding:0 20px;
+    background:var(--card);border-bottom:1px solid var(--card-bd);
+    position:fixed;top:0;left:0;right:0;z-index:60}
+  .brand{display:flex;flex-direction:column;line-height:1.15;flex:none}
+  .brand .t{font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:-.01em}
+  .brand .s{font-size:11.5px;color:var(--muted)}
+  .tabs{display:flex;gap:4px;margin-left:6px}
+  .tab{font-size:13px;font-weight:500;color:var(--muted);padding:8px 13px;border-radius:9px;
+    background:transparent;border:1px solid transparent;cursor:pointer;white-space:nowrap;
+    font-family:var(--body)}
+  .tab:hover{color:var(--ink);background:var(--canvas)}
+  .tab.active{color:var(--ink);background:var(--canvas);border-color:var(--card-bd);font-weight:600}
+  .bar .spacer{flex:1}
+  .hint{font-size:12px;color:var(--muted);white-space:nowrap}
+  .hint b{color:var(--ink);font-weight:600}
+  @media (max-width:1180px){ .hint{display:none} }
+  @media (max-width:860px){ .brand .s{display:none} }
+  @media (max-width:720px){ .tabs{font-size:12px} .tab{padding:7px 9px} }
+
+  .toolbar{display:flex;align-items:center;gap:10px;flex:none}
+  .themebtn{width:36px;height:30px;border:1px solid var(--card-bd);border-radius:8px;background:var(--card);
+    cursor:pointer;color:var(--ink);display:grid;place-items:center;transition:background .15s,transform .1s}
+  .themebtn:hover{background:var(--canvas)}
+  .themebtn:active{transform:scale(.94)}
+  .themebtn svg{width:17px;height:17px}
+  .themebtn .moon{display:none}
+  body.dark .themebtn .sun{display:none}
+  body.dark .themebtn .moon{display:block}
+
+  .langsw{display:flex;gap:6px;flex:none}
+  .flag{width:32px;height:23px;padding:0;border:1px solid var(--card-bd);border-radius:6px;overflow:hidden;
+    cursor:pointer;background:var(--card);opacity:.42;transition:opacity .15s, box-shadow .15s, transform .1s}
+  .flag:hover{opacity:.8}
+  .flag.active{opacity:1;box-shadow:0 0 0 2px rgba(47,111,237,.35)}
+  .flag:active{transform:scale(.94)}
+  .flag svg{display:block;width:100%;height:100%}
+
+  /* ============ VIEW SWITCHING ============ */
+  .view{display:none}
+  .view.active{display:block}
+
+  /* ============ VIEW: FLUXO DO PROCESSO ============ */
+  #canvas{position:fixed;inset:60px 0 0 0;overflow:hidden;cursor:grab;
+    background-color:var(--canvas);
+    background-image:radial-gradient(var(--dot) 1.4px, transparent 1.4px);
+    background-size:26px 26px}
+  #canvas.grabbing{cursor:grabbing}
+  #world{position:absolute;top:0;left:0;transform-origin:0 0}
+  #wires{position:absolute;top:0;left:0;overflow:visible;pointer-events:none}
+  .wpath{fill:none;stroke:var(--wire);stroke-width:2.2;stroke-linecap:round}
+  .wpath.stop{stroke:var(--stop-bd);stroke-dasharray:6 6}
+  #wires marker#arrow path{fill:var(--wire)}
+  #wires marker#arrow-stop path{fill:var(--stop-bd)}
+
+  .node{position:absolute;user-select:none;cursor:pointer;
+    display:flex;flex-direction:column;justify-content:center;
+    box-shadow:var(--card-sh);transition:transform .16s ease, box-shadow .16s ease}
+  .node:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(28,39,60,.15);z-index:6}
+  .node.active{box-shadow:0 0 0 3px rgba(47,111,237,.35), 0 10px 26px rgba(28,39,60,.16)}
+  .node .ttl{font-family:var(--disp);font-weight:600;font-size:14.5px;line-height:1.22}
+  .node .sub{font-size:11.8px;color:var(--muted);margin-top:5px;line-height:1.35}
+
+  .n-proc{background:var(--card);border:1px solid var(--card-bd);border-left:4px solid var(--proc-ac);
+    border-radius:12px;padding:14px 16px}
+  .n-term{border-radius:999px;padding:0 22px;align-items:center;text-align:center}
+  .n-term .ttl{font-family:var(--disp);font-weight:700;font-size:15px}
+  .n-start{background:var(--start-bg);border:1.5px solid var(--start)} .n-start .ttl{color:var(--start)}
+  .n-end{background:var(--end-bg);border:1.5px solid var(--end)} .n-end .ttl{color:var(--end);font-size:14px}
+  .n-act{border-radius:12px;padding:13px 16px;background:var(--act-bg);border:1px solid var(--act-bd)}
+  .n-act .ttl{color:var(--act-ink)}
+  .n-mode{border-radius:12px;padding:13px 16px;background:var(--mode-bg);border:1px solid var(--mode-bd)}
+  .n-mode .ttl{color:var(--mode-ink)}
+  .n-stop{border-radius:12px;padding:13px 16px;background:var(--stop-bg);border:1px solid var(--stop-bd)}
+  .n-stop .ttl{color:var(--stop-ink)} .n-stop .sub{color:var(--stop-ink)}
+
+  .node .plus{position:absolute;top:-9px;right:-9px;width:20px;height:20px;border-radius:50%;
+    background:var(--card);border:1px solid var(--card-bd);color:var(--muted);font-size:13px;line-height:18px;
+    text-align:center;box-shadow:0 2px 5px rgba(28,39,60,.12);opacity:0;transition:opacity .16s}
+  .node:hover .plus,.node.active .plus{opacity:1}
+
+  .n-dec{background:var(--dec-bd);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);box-shadow:none;padding:0}
+  .n-dec .inner{position:absolute;inset:2px;background:var(--dec-fill);
+    clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);
+    display:flex;align-items:center;justify-content:center;text-align:center;padding:0 46px}
+  .n-dec .ttl{font-size:13.5px;color:var(--dec-ink)}
+  .n-dec .eye{position:absolute;top:16px;left:50%;transform:translateX(-50%);
+    font-size:9px;letter-spacing:.16em;color:var(--dec-bd);font-weight:700;text-transform:uppercase}
+  .n-dec.active .inner{background:var(--dec-hl)}
+  .n-dec .diamark{position:absolute;bottom:15px;left:50%;transform:translateX(-50%);
+    font-size:12px;color:var(--dec-bd);opacity:0;transition:opacity .16s}
+  .n-dec:hover .diamark,.n-dec.active .diamark{opacity:1}
+
+  .elbl{position:absolute;transform:translate(-50%,-50%);background:var(--card);border:1px solid var(--card-bd);
+    color:var(--wire-lbl);font-size:11px;font-weight:600;padding:2px 9px;border-radius:999px;
+    box-shadow:0 1px 3px rgba(28,39,60,.08);white-space:nowrap;pointer-events:none}
+  .elbl.yes{color:var(--ok);border-color:var(--start)}
+  .elbl.no{color:var(--stop-ink);border-color:var(--stop-bd)}
+
+  .node{opacity:0;animation:pop .5s cubic-bezier(.2,.7,.3,1) forwards}
+  @keyframes pop{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+  #wires .wpath{opacity:0;animation:fade .6s ease forwards}
+  .elbl{opacity:0;animation:fade .5s ease forwards}
+  @keyframes fade{to{opacity:1}}
+
+  .controls{position:fixed;right:20px;bottom:20px;z-index:50;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+  .zoombox{display:flex;align-items:center;background:var(--card);border:1px solid var(--card-bd);border-radius:12px;
+    box-shadow:var(--card-sh);overflow:hidden}
+  .zoombox button{border:none;background:var(--card);width:38px;height:38px;font-size:18px;cursor:pointer;color:var(--ink)}
+  .zoombox button:hover{background:var(--canvas)}
+  .zoombox .pct{width:52px;text-align:center;font-size:12px;color:var(--muted);
+    border-left:1px solid var(--card-bd);border-right:1px solid var(--card-bd);height:38px;line-height:38px}
+  .fitbtn{background:var(--card);border:1px solid var(--card-bd);border-radius:10px;padding:9px 14px;font-size:12.5px;
+    font-weight:600;color:var(--ink);cursor:pointer;box-shadow:var(--card-sh);font-family:var(--body)}
+  .fitbtn:hover{background:var(--canvas)}
+
+  .flow-legend{position:fixed;left:20px;bottom:20px;z-index:50;background:var(--card);border:1px solid var(--card-bd);
+    border-radius:12px;box-shadow:var(--card-sh);padding:12px 14px;display:flex;flex-direction:column;gap:7px}
+  .flow-legend .row{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted)}
+  .flow-legend .sw{width:13px;height:13px;border-radius:4px;flex:none;border:1px solid rgba(0,0,0,.06)}
+  .flow-legend .sw.dia{border-radius:2px;transform:rotate(45deg);width:11px;height:11px}
+  @media (max-width:760px){ .flow-legend{display:none} }
+
+  #drawer{position:fixed;top:60px;right:0;bottom:0;width:400px;max-width:88vw;background:var(--card);
+    border-left:1px solid var(--card-bd);box-shadow:-14px 0 40px rgba(28,39,60,.12);z-index:55;
+    transform:translateX(102%);transition:transform .32s cubic-bezier(.2,.7,.3,1);
+    display:flex;flex-direction:column}
+  #drawer.open{transform:none}
+  .dw-head{padding:22px 24px 16px;border-bottom:1px solid var(--card-bd);position:relative}
+  .dw-badge{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    padding:4px 10px;border-radius:999px;margin-bottom:12px}
+  .dw-title{font-family:var(--disp);font-weight:700;font-size:20px;line-height:1.2;margin:0;padding-right:34px;color:var(--ink)}
+  .dw-close{position:absolute;top:18px;right:18px;width:32px;height:32px;border-radius:9px;border:1px solid var(--card-bd);
+    background:var(--card);cursor:pointer;font-size:17px;color:var(--muted);line-height:30px}
+  .dw-close:hover{background:var(--canvas);color:var(--ink)}
+  .dw-body{padding:20px 24px 40px;overflow-y:auto}
+  .dw-lead{font-size:14px;color:var(--ink);line-height:1.55;margin:0 0 18px}
+  .dw-sec{margin-bottom:18px}
+  .dw-sec h4{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.02em;color:var(--muted);
+    text-transform:uppercase;margin:0 0 9px}
+  .dw-sec ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}
+  .dw-sec li{font-size:13.3px;line-height:1.45;padding-left:16px;position:relative;color:var(--body-ink)}
+  .dw-sec li::before{content:"";position:absolute;left:0;top:8px;width:6px;height:6px;border-radius:2px;background:var(--proc-ac)}
+  .dw-sec li b{color:var(--ink);font-weight:600}
+  .dw-sec code{font-family:var(--mono);font-size:11.6px;background:var(--code-bg);border:1px solid var(--code-bd);
+    border-radius:5px;padding:1px 6px;color:var(--code-ink)}
+  .dw-note{font-size:12.5px;line-height:1.45;background:var(--stop-bg);border:1px solid var(--stop-bd);color:var(--stop-note);
+    border-radius:10px;padding:11px 13px;margin-top:4px}
+  .dw-note b{color:var(--stop-note)}
+
+  @media (prefers-reduced-motion:reduce){
+    .node,.elbl,#wires .wpath{animation:none;opacity:1}
+    .node{transform:none}
+    #drawer{transition:none}
+  }
+
+  /* ============ VIEW: FONTES DE DADOS (escopo) ============ */
+  .view-sources{
+    .page{min-height:100vh;padding-top:60px;
+      background-color:var(--canvas);
+      background-image:radial-gradient(var(--dot) 1.2px, transparent 1.2px);
+      background-size:26px 26px}
+    .wrap{max-width:1140px;margin:0 auto;padding:44px 28px 90px}
+    .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;
+      color:var(--fam-api);display:inline-flex;align-items:center;gap:9px;margin-bottom:14px}
+    .eyebrow::before{content:"";width:22px;height:1px;background:var(--fam-api)}
+    h1{font-family:var(--disp);font-weight:700;font-size:clamp(30px,4.4vw,44px);letter-spacing:-.02em;margin:0 0 14px}
+    .lead{max-width:660px;color:var(--muted);font-size:16px;line-height:1.55;margin:0}
+    .stats{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}
+    .stat{background:var(--card);border:1px solid var(--card-bd);border-radius:12px;padding:12px 18px;box-shadow:var(--card-sh)}
+    .stat .n{font-family:var(--disp);font-weight:700;font-size:22px}
+    .stat .l{color:var(--muted);font-size:12.5px}
+    .stat.warn{border-color:var(--warn-bd);background:var(--warn-bg)} .stat.warn .n{color:var(--warn-ink)}
+    .legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+    .legend .fchip{display:inline-flex;align-items:center;gap:9px;font-size:12.5px;font-weight:500;
+      border:1px solid var(--card-bd);background:var(--card);border-radius:999px;padding:6px 13px 6px 8px;color:var(--ink)}
+    .legend .ic{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;flex:none}
+    .legend .ic svg{width:14px;height:14px;stroke-width:2}
+    .legend .manual{margin-left:auto;color:var(--warn-ink);border-color:var(--warn-bd);background:var(--warn-bg)}
+    @media (max-width:720px){ .legend .manual{margin-left:0} }
+    .sec{margin-top:44px}
+    .sec-head{margin-bottom:18px}
+    .sec-head h2{font-family:var(--disp);font-weight:600;font-size:22px;letter-spacing:-.01em;margin:0}
+    .sec-head p{color:var(--muted);font-size:14px;margin:4px 0 0}
+    .mtx-scroll{overflow-x:auto;border:1px solid var(--card-bd);border-radius:14px;background:var(--card);box-shadow:var(--card-sh)}
+    table.mtx{border-collapse:collapse;width:100%;min-width:820px;font-size:13.2px}
+    table.mtx thead th{background:var(--th-bg);color:var(--muted);font-weight:600;text-align:left;
+      font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;padding:13px 16px;border-bottom:1px solid var(--card-bd);white-space:nowrap}
+    table.mtx td{padding:14px 16px;border-bottom:1px solid var(--hair);vertical-align:top}
+    table.mtx tbody tr:last-child td{border-bottom:none}
+    table.mtx tbody tr:hover td{background:var(--row-hover)}
+    .mtx .src-cell{border-left:4px solid var(--fc);padding-left:14px}
+    .mtx .src-cell .nm{font-weight:600;color:var(--ink);line-height:1.25}
+    .mtx .fam-tag{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:500;color:var(--fc)}
+    .mtx .fam-tag .dot{width:8px;height:8px;border-radius:3px;background:var(--fc)}
+    .mtx code{font-family:var(--mono);font-size:11.4px;background:var(--code-bg);border:1px solid var(--code-bd);border-radius:5px;padding:1px 6px;color:var(--code-ink)}
+    .pill{display:inline-block;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+    .pill.yes{color:var(--ok);background:var(--ok-bg)}
+    .pill.no{color:var(--muted);background:var(--hair)}
+    .pill.manual{color:var(--warn-ink);background:var(--warn-bg)}
+    .pill.auto{color:var(--fam-api);background:var(--fam-api-bg)}
+    .pill.stop{color:var(--stop-ink);background:var(--stop-bg)}
+    .pill.warn{color:var(--warn-ink);background:var(--warn-bg)}
+    .fam{margin-top:34px}
+    .fam-band{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+    .fam-band .ic{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;flex:none}
+    .fam-band .ic svg{width:19px;height:19px;stroke-width:2}
+    .fam-band .txt .h{font-family:var(--disp);font-weight:600;font-size:16px;color:var(--fc)}
+    .fam-band .txt .c{font-size:12px;color:var(--muted)}
+    .fam-band .rule{flex:1;height:1px;background:var(--card-bd)}
+    .grid{display:grid;gap:16px;grid-template-columns:repeat(2,1fr)}
+    .grid.one{grid-template-columns:1fr}
+    @media (max-width:860px){ .grid{grid-template-columns:1fr} }
+    .src{background:var(--card);border:1px solid var(--card-bd);border-top:3px solid var(--fc);
+      border-radius:14px;box-shadow:var(--card-sh);overflow:hidden;display:flex;flex-direction:column}
+    .src-top{display:flex;align-items:center;gap:12px;padding:16px 18px 12px}
+    .src-num{font-family:var(--mono);font-size:12px;color:var(--fc);font-weight:600;flex:none}
+    .src-name{font-family:var(--disp);font-weight:600;font-size:15.5px;line-height:1.2;flex:1}
+    .src-body{padding:0 18px 4px}
+    .fld{padding:11px 0;border-top:1px solid var(--hair)}
+    .fld:first-child{border-top:none}
+    .fld h5{margin:0 0 6px;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:600}
+    .fld p{margin:0;font-size:13.3px;line-height:1.5;color:var(--body-ink)}
+    .fld ol{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px}
+    .fld ol li{font-size:13px;line-height:1.45;color:var(--body-ink)}
+    .fld code{font-family:var(--mono);font-size:11.4px;background:var(--code-bg);border:1px solid var(--code-bd);border-radius:5px;padding:1px 6px;color:var(--code-ink)}
+    .fld-2{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
+    .fld-2 .fld{border-top:1px solid var(--hair)}
+    .fail{display:inline-block;font-size:13px;line-height:1.45;border-radius:9px;padding:9px 12px;font-weight:500}
+    .fail.stop{background:var(--stop-bg);color:var(--stop-ink);border:1px solid var(--stop-bd)}
+    .fail.warn{background:var(--warn-bg);color:var(--warn-ink);border:1px solid var(--warn-bd)}
+    .src-note{margin:8px 18px 18px;background:var(--th-bg);border:1px solid var(--card-bd);border-left:3px solid var(--fc);
+      border-radius:10px;padding:11px 13px;font-size:12.7px;line-height:1.5;color:var(--body-ink)}
+    .src-note b{font-family:var(--disp);color:var(--ink);display:block;margin-bottom:3px;font-size:11.5px;letter-spacing:.03em;text-transform:uppercase}
+    .chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px;flex:none}
+    .chip .d{width:7px;height:7px;border-radius:50%}
+    .chip.manual{color:var(--warn-ink);background:var(--warn-bg)} .chip.manual .d{background:var(--warn-bd)}
+    .chip.auto{color:var(--fam-api);background:var(--fam-api-bg)} .chip.auto .d{background:var(--fam-api)}
+  }
+
+  /* ============ VIEW: CAMADAS DO BANCO (escopo) ============ */
+  .view-layers{
+    .page{min-height:100vh;padding-top:60px;
+      background-color:var(--canvas);
+      background-image:radial-gradient(var(--dot) 1.2px, transparent 1.2px);
+      background-size:26px 26px}
+    .wrap{max-width:1080px;margin:0 auto;padding:44px 28px 90px}
+    .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;
+      color:var(--raw);display:inline-flex;align-items:center;gap:9px;margin-bottom:14px}
+    .eyebrow::before{content:"";width:22px;height:1px;background:var(--raw)}
+    h1{font-family:var(--disp);font-weight:700;font-size:clamp(30px,4.4vw,44px);letter-spacing:-.02em;margin:0 0 14px}
+    .lead{max-width:680px;color:var(--muted);font-size:16px;line-height:1.55;margin:0}
+    .sec{margin-top:46px}
+    .sec-head{margin-bottom:18px}
+    .sec-head h2{font-family:var(--disp);font-weight:600;font-size:22px;letter-spacing:-.01em;margin:0}
+    .sec-head p{color:var(--muted);font-size:14px;margin:4px 0 0}
+    .stack-wrap{background:var(--card);border:1px solid var(--card-bd);border-radius:16px;box-shadow:var(--card-sh);
+      padding:22px 24px 18px}
+    .stack-wrap svg{display:block;width:100%;height:auto}
+    .stack-note{font-size:12.7px;color:var(--muted);line-height:1.5;margin:10px 4px 0;
+      border-top:1px dashed var(--card-bd);padding-top:12px}
+    .stack-note b{color:var(--rules)}
+    .mtx-scroll{overflow-x:auto;border:1px solid var(--card-bd);border-radius:14px;background:var(--card);box-shadow:var(--card-sh)}
+    table.mtx{border-collapse:collapse;width:100%;min-width:840px;font-size:13.2px}
+    table.mtx thead th{background:var(--th-bg);color:var(--muted);font-weight:600;text-align:left;
+      font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;padding:13px 16px;border-bottom:1px solid var(--card-bd);white-space:nowrap}
+    table.mtx td{padding:14px 16px;border-bottom:1px solid var(--hair);vertical-align:top}
+    table.mtx tbody tr:last-child td{border-bottom:none}
+    table.mtx tbody tr:hover td{background:var(--row-hover)}
+    .mtx .lay-cell{border-left:4px solid var(--lc);padding-left:14px}
+    .mtx .lay-cell .nm{font-family:var(--disp);font-weight:700;color:var(--lc);font-size:15px;line-height:1}
+    .mtx .lay-cell .rl{font-size:11.5px;color:var(--muted);margin-top:3px}
+    .mtx code{font-family:var(--mono);font-size:11.4px;background:var(--code-bg);border:1px solid var(--code-bd);border-radius:5px;padding:1px 6px;color:var(--code-ink)}
+    .pill{display:inline-block;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+    .pill.load{color:var(--load-ink);background:var(--load-bg)}
+    .pill.rebuild{color:var(--rebuild-ink);background:var(--rebuild-bg)}
+    .lay{background:var(--card);border:1px solid var(--card-bd);border-top:4px solid var(--lc);
+      border-radius:15px;box-shadow:var(--card-sh);margin-bottom:18px;overflow:hidden}
+    .lay-head{display:flex;align-items:center;gap:14px;padding:18px 22px 14px;
+      background:linear-gradient(100deg,var(--lcbg),transparent 65%)}
+    .lay-name{font-family:var(--disp);font-weight:700;font-size:24px;letter-spacing:.01em;color:var(--lc)}
+    .role-chip{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+      color:var(--lc);background:var(--lcbg);border:1px solid var(--lc);border-radius:999px;padding:4px 11px}
+    .lay-roleline{margin-left:auto;text-align:right;font-size:13px;color:var(--muted);max-width:46%}
+    @media (max-width:640px){ .lay-roleline{display:none} }
+    .lay-body{padding:16px 22px 6px}
+    .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 26px}
+    @media (max-width:640px){ .fgrid{grid-template-columns:1fr} }
+    .fld{padding:12px 0;border-top:1px solid var(--hair)}
+    .fld h5{margin:0 0 6px;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:600}
+    .fld p{margin:0;font-size:13.4px;line-height:1.5;color:var(--body-ink)}
+    .fld code{font-family:var(--mono);font-size:11.4px;background:var(--code-bg);border:1px solid var(--code-bd);border-radius:5px;padding:1px 6px;color:var(--code-ink)}
+    .lay-note{margin:6px 22px 20px;background:var(--lcbg);border:1px solid var(--card-bd);border-left:3px solid var(--lc);
+      border-radius:10px;padding:11px 14px;font-size:12.8px;line-height:1.5;color:var(--body-ink)}
+    .lay-note b{font-family:var(--disp);color:var(--ink);display:block;margin-bottom:3px;font-size:11px;letter-spacing:.03em;text-transform:uppercase}
+    .gold-extra{padding:4px 22px 4px}
+    .block{border-top:1px solid var(--hair);padding:16px 0 4px}
+    .block > h5{margin:0 0 12px;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:600}
+    .catflow{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px}
+    .cstep{flex:1 1 140px;min-width:130px;background:var(--card);border:1px solid var(--card-bd);border-radius:10px;
+      padding:10px 12px;position:relative}
+    .cstep .n{font-family:var(--mono);font-size:10px;color:var(--gold);font-weight:600}
+    .cstep .t{font-size:12.6px;line-height:1.35;margin-top:3px;color:var(--body-ink)}
+    .cstep.final{background:var(--gold-bg);border-color:var(--gold-line)}
+    .cstep.final .t{color:var(--gold);font-weight:600}
+    .carr{align-self:center;color:var(--faint);font-size:16px;flex:none}
+    @media (max-width:720px){ .carr{transform:rotate(90deg)} .cstep{flex-basis:100%} }
+    .keyint{margin-top:16px;background:var(--gold-bg);border:1px solid var(--gold-line);border-radius:12px;padding:14px 16px}
+    .keyint .kh{font-family:var(--disp);font-weight:600;font-size:13.5px;color:var(--gold);display:flex;align-items:center;gap:8px}
+    .keyint .kh .star{font-size:14px}
+    .keyint p{margin:7px 0 0;font-size:13.2px;line-height:1.5;color:var(--gold-body)}
+    .keyint code{font-family:var(--mono);font-size:11.4px;background:var(--card);border:1px solid var(--gold-line);border-radius:5px;padding:1px 6px;color:var(--gold)}
+    .closing{margin-top:34px;background:linear-gradient(120deg,var(--gold-bg),transparent);
+      border:1px solid var(--gold-line);border-radius:16px;padding:22px 26px}
+    .closing .h{font-family:var(--disp);font-weight:700;font-size:20px;color:var(--gold)}
+    .closing p{margin:8px 0 0;color:var(--gold-body);font-size:14px;line-height:1.55;max-width:720px}
+  }
+
+  /* ---- Dicionário de dados (aba Camadas) ---- */
+  .view-layers{
+    .dict-group{margin-top:26px}
+    .dict-band{display:flex;align-items:center;gap:12px;margin:22px 0 12px}
+    .dict-band .dict-dot{width:12px;height:12px;border-radius:4px;background:var(--lc);flex:none}
+    .dict-band .dict-name{font-family:var(--disp);font-weight:700;font-size:17px;color:var(--lc)}
+    .dict-band .dict-count{font-size:12px;color:var(--muted)}
+    .dict-band .dict-rule{flex:1;height:1px;background:var(--card-bd)}
+    details.dtable{background:var(--card);border:1px solid var(--card-bd);border-left:3px solid var(--lc);
+      border-radius:12px;margin-bottom:10px;overflow:hidden;box-shadow:var(--card-sh)}
+    details.dtable>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px;padding:13px 16px;font-size:13.5px}
+    details.dtable>summary::-webkit-details-marker{display:none}
+    details.dtable>summary::before{content:"\25B8";color:var(--muted);font-size:11px;transition:transform .15s;flex:none}
+    details.dtable[open]>summary::before{transform:rotate(90deg)}
+    summary .dt-name{font-family:var(--mono);font-weight:600;color:var(--ink)}
+    summary .dt-cols{margin-left:auto;font-size:11.5px;color:var(--muted);white-space:nowrap}
+    .dtable-scroll{overflow-x:auto;border-top:1px solid var(--hair)}
+    table.dcol{border-collapse:collapse;width:100%;min-width:640px;font-size:12.7px}
+    table.dcol thead th{background:var(--th-bg);color:var(--muted);text-align:left;font-size:10.5px;letter-spacing:.04em;
+      text-transform:uppercase;padding:9px 14px;border-bottom:1px solid var(--card-bd);white-space:nowrap}
+    table.dcol td{padding:9px 14px;border-bottom:1px solid var(--hair);vertical-align:top;color:var(--body-ink)}
+    table.dcol tbody tr:last-child td{border-bottom:none}
+    table.dcol tbody tr:hover td{background:var(--row-hover)}
+    table.dcol .c-ord{color:var(--faint);font-family:var(--mono);width:34px}
+    table.dcol .c-col{font-family:var(--mono);color:var(--ink);white-space:nowrap}
+    table.dcol .c-type{font-family:var(--mono);color:var(--muted);white-space:nowrap;font-size:11.6px}
+    .req{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap}
+    .req.y{color:var(--stop-ink);background:var(--stop-bg)}
+    .req.n{color:var(--muted);background:var(--hair)}
+  }
+</style>
+</head>
+<body class="flow">
+
+  <div class="bar">
+    <div class="brand">
+      <span class="t">ETL · Lav &amp; Sec Express</span>
+      <span class="s" id="uiSub">Documentação do processo</span>
+    </div>
+    <div class="tabs" id="uiTabs">
+      <button class="tab active" data-view="flow"><span></span></button>
+      <button class="tab" data-view="sources"><span></span></button>
+      <button class="tab" data-view="layers"><span></span></button>
+    </div>
+    <div class="spacer"></div>
+    <div class="hint" id="uiHint"></div>
+    <div class="toolbar">
+      <button class="themebtn" id="themeBtn" title="Tema claro/escuro" aria-label="Alternar tema">
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+      <div class="langsw">
+        <button class="flag active" data-lang="pt" title="Português (Brasil)">
+          <svg viewBox="0 0 32 23"><rect width="32" height="23" fill="#009c3b"/><path d="M16 3 L29 11.5 L16 20 L3 11.5 Z" fill="#ffdf00"/><circle cx="16" cy="11.5" r="4.8" fill="#002776"/></svg>
+        </button>
+        <button class="flag" data-lang="en" title="English">
+          <svg viewBox="0 0 32 23">
+            <rect width="32" height="23" fill="#b22234"/>
+            <g fill="#fff"><rect y="1.77" width="32" height="1.77"/><rect y="5.31" width="32" height="1.77"/><rect y="8.85" width="32" height="1.77"/><rect y="12.38" width="32" height="1.77"/><rect y="15.92" width="32" height="1.77"/><rect y="19.46" width="32" height="1.77"/></g>
+            <rect width="14" height="12.38" fill="#3c3b6e"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== VIEW: FLUXO DO PROCESSO ===================== -->
+  <section class="view view-flow active" data-view="flow">
+    <div id="canvas">
+      <div id="world">
+        <svg id="wires" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arrow" markerWidth="9" markerHeight="9" refX="6.5" refY="3.2" orient="auto" markerUnits="userSpaceOnUse">
+              <path d="M0,0 L7,3.2 L0,6.4 Z"></path>
+            </marker>
+            <marker id="arrow-stop" markerWidth="9" markerHeight="9" refX="6.5" refY="3.2" orient="auto" markerUnits="userSpaceOnUse">
+              <path d="M0,0 L7,3.2 L0,6.4 Z"></path>
+            </marker>
+          </defs>
+        </svg>
+      </div>
+
+      <div class="flow-legend" id="flowLegend">
+        <div class="row"><span class="sw" style="background:var(--start-bg);border-color:var(--start)"></span><span class="lg-t"></span></div>
+        <div class="row"><span class="sw" style="background:var(--card);border-left:4px solid var(--proc-ac)"></span><span class="lg-t"></span></div>
+        <div class="row"><span class="sw dia" style="background:var(--dec-fill);border-color:var(--dec-bd)"></span><span class="lg-t"></span></div>
+        <div class="row"><span class="sw" style="background:var(--act-bg);border-color:var(--act-bd)"></span><span class="lg-t"></span></div>
+        <div class="row"><span class="sw" style="background:var(--stop-bg);border-color:var(--stop-bd)"></span><span class="lg-t"></span></div>
+      </div>
+
+      <div class="controls">
+        <button class="fitbtn" id="fit"></button>
+        <div class="zoombox">
+          <button id="zout">−</button>
+          <div class="pct" id="pct">100%</div>
+          <button id="zin">+</button>
+        </div>
+      </div>
+    </div>
+
+    <aside id="drawer" aria-hidden="true">
+      <div class="dw-head">
+        <span class="dw-badge" id="dwBadge"></span>
+        <h2 class="dw-title" id="dwTitle"></h2>
+        <button class="dw-close" id="dwClose"></button>
+      </div>
+      <div class="dw-body" id="dwBody"></div>
+    </aside>
+  </section>
+
+  <!-- ===================== VIEW: FONTES DE DADOS ===================== -->
+  <section class="view view-sources" data-view="sources">
+    <div class="page">
+      <div class="wrap">
+        <div class="eyebrow" id="s_uiEyebrow"></div>
+        <h1 id="s_uiTitle"></h1>
+        <p class="lead" id="s_uiLead"></p>
+
+        <div class="stats" id="s_uiStats"></div>
+        <div class="legend" id="s_uiLegend"></div>
+
+        <section class="sec">
+          <div class="sec-head"><h2 id="s_mtxTitle"></h2><p id="s_mtxSub"></p></div>
+          <div class="mtx-scroll">
+            <table class="mtx">
+              <thead><tr id="s_mtxHead"></tr></thead>
+              <tbody id="s_mtxBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="sec">
+          <div class="sec-head"><h2 id="s_cardsTitle"></h2><p id="s_cardsSub"></p></div>
+          <div id="s_famWrap"></div>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== VIEW: CAMADAS DO BANCO ===================== -->
+  <section class="view view-layers" data-view="layers">
+    <div class="page">
+      <div class="wrap">
+        <div class="eyebrow" id="l_uiEyebrow"></div>
+        <h1 id="l_uiTitle"></h1>
+        <p class="lead" id="l_uiLead"></p>
+
+        <section class="sec">
+          <div class="sec-head"><h2 id="l_stackTitle"></h2><p id="l_stackSub"></p></div>
+          <div class="stack-wrap">
+            <div id="l_stackSvg"></div>
+            <div class="stack-note" id="l_stackNote"></div>
+          </div>
+        </section>
+
+        <section class="sec">
+          <div class="sec-head"><h2 id="l_mtxTitle"></h2><p id="l_mtxSub"></p></div>
+          <div class="mtx-scroll">
+            <table class="mtx"><thead><tr id="l_mtxHead"></tr></thead><tbody id="l_mtxBody"></tbody></table>
+          </div>
+        </section>
+
+        <section class="sec">
+          <div class="sec-head"><h2 id="l_cardsTitle"></h2><p id="l_cardsSub"></p></div>
+          <div id="l_layWrap"></div>
+        </section>
+
+        <section class="sec">
+          <div class="sec-head"><h2 id="l_dictTitle"></h2><p id="l_dictSub"></p></div>
+          <div id="l_dictWrap"></div>
+        </section>
+
+        <div class="closing">
+          <div class="h" id="l_closeH"></div>
+          <p id="l_closeP"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+<script>
+window.__views = {};
+let LANG = 'pt';
+let THEME = 'light';
+
+/* ===================== VIEW FLOW (IIFE) ===================== */
+(function(){
+const NODES = {
+  start:   {x:365, y:30,  w:210, h:56,  kind:'start', ttl:{pt:'Pipeline inicia',en:'Pipeline starts'}},
+  cfg:     {x:340, y:150, w:260, h:74,  kind:'proc',  ttl:{pt:'Carrega e valida as configurações',en:'Loads and validates the configuration'}, sub:{pt:'Confere se tudo que é obrigatório está definido',en:'Checks that everything required is defined'}},
+  dCfg:    {x:345, y:284, w:250, h:118, kind:'dec',   ttl:{pt:'A configuração está completa?',en:'Is the configuration complete?'}},
+  stopCfg: {x:770, y:307, w:240, h:74,  kind:'stop',  ttl:{pt:'Encerra a execução',en:'Stops the run'}, sub:{pt:'Informa quais itens estão faltando',en:'Reports which items are missing'}},
+  db:      {x:340, y:456, w:260, h:72,  kind:'proc',  ttl:{pt:'Prepara o acesso ao banco de dados',en:'Prepares access to the database'}},
+  dDb:     {x:345, y:562, w:250, h:118, kind:'dec',   ttl:{pt:'O banco de dados já existe?',en:'Does the database already exist?'}},
+  create:  {x:40,  y:586, w:240, h:74,  kind:'act',   ttl:{pt:'Cria o banco de dados',en:'Creates the database'}},
+  reuse:   {x:770, y:586, w:240, h:74,  kind:'act',   ttl:{pt:'Reutiliza o banco existente',en:'Reuses the existing database'}},
+  struct:  {x:325, y:760, w:290, h:78,  kind:'proc',  ttl:{pt:'Garante a estrutura dos dados brutos',en:'Ensures the raw data structure'}, sub:{pt:'Cria as tabelas de armazenamento que faltarem',en:'Creates any missing storage tables'}},
+  dMode:   {x:345, y:896, w:250, h:118, kind:'dec',   ttl:{pt:'As tabelas já têm dados?',en:'Do the tables already have data?'}},
+  inc:     {x:770, y:920, w:240, h:78,  kind:'mode',  ttl:{pt:'Carga incremental',en:'Incremental load'}, sub:{pt:'Busca só os períodos recentes',en:'Fetches only the recent periods'}},
+  found:   {x:40,  y:920, w:240, h:78,  kind:'mode',  ttl:{pt:'Carga inicial completa',en:'Full initial load'}, sub:{pt:'Traz todo o histórico disponível',en:'Brings the entire available history'}},
+  extract: {x:310, y:1096,w:320, h:86,  kind:'proc',  ttl:{pt:'Extrai as fontes e guarda os dados brutos',en:'Extracts the sources and stores the raw data'}, sub:{pt:'As 5 fontes são processadas uma após a outra',en:'The 5 sources are processed one after another'}},
+  dFail:   {x:345, y:1238,w:250, h:118, kind:'dec',   ttl:{pt:'Alguma fonte falhou?',en:'Did any source fail?'}},
+  stopFail:{x:770, y:1259,w:250, h:86,  kind:'stop',  ttl:{pt:'Interrompe tudo',en:'Stops everything'}, sub:{pt:'Nada é transformado — falha para imediatamente',en:'Nothing is transformed — it fails immediately'}},
+  transform:{x:305,y:1418,w:330, h:86,  kind:'proc',  ttl:{pt:'Transforma os dados',en:'Transforms the data'}, sub:{pt:'RAW → Silver → Rules → Gold',en:'RAW → Silver → Rules → Gold'}},
+  end:     {x:310, y:1560,w:320, h:62,  kind:'end',   ttl:{pt:'Data Warehouse limpo e organizado',en:'Clean, organized Data Warehouse'}},
+};
+
+const EDGES = [
+  ['start','bottom','cfg','top'],
+  ['cfg','bottom','dCfg','top'],
+  ['dCfg','right','stopCfg','left',null,'no',true],
+  ['dCfg','bottom','db','top',null,'yes'],
+  ['db','bottom','dDb','top'],
+  ['dDb','left','create','right',null,'no'],
+  ['dDb','right','reuse','left',null,'yes'],
+  ['create','bottom','struct','top'],
+  ['reuse','bottom','struct','top'],
+  ['struct','bottom','dMode','top'],
+  ['dMode','right','inc','left',null,'yes'],
+  ['dMode','left','found','right',null,'no'],
+  ['inc','bottom','extract','top'],
+  ['found','bottom','extract','top'],
+  ['extract','bottom','dFail','top'],
+  ['dFail','right','stopFail','left',null,'yes',true],
+  ['dFail','bottom','transform','top',null,'no'],
+  ['transform','bottom','end','top'],
+];
+
+const UI = {
+  pt:{ legend:['Início / fim','Etapa do processo','Decisão','Ação sobre o banco','Interrupção'],
+    fit:'Ajustar à tela', eyebrow:'Decisão', close:'✕',
+    badges:{start:'Início',end:'Fim',proc:'Etapa do processo',dec:'Decisão',act:'Ação sobre o banco',mode:'Modo de carga',stop:'Interrupção'},
+    yes:'Sim', no:'Não' },
+  en:{ legend:['Start / end','Process step','Decision','Action on the database','Stop'],
+    fit:'Fit to screen', eyebrow:'Decision', close:'✕',
+    badges:{start:'Start',end:'End',proc:'Process step',dec:'Decision',act:'Action on the database',mode:'Load mode',stop:'Stop'},
+    yes:'Yes', no:'No' },
+};
+const BADGE_STYLE={start:['var(--start)','var(--start-bg)'],end:['var(--end)','var(--end-bg)'],
+  proc:['var(--proc-ac)','#eef1f5'],dec:['var(--dec-ink)','var(--dec-fill)'],
+  act:['var(--act-ink)','var(--act-bg)'],mode:['var(--mode-ink)','var(--mode-bg)'],stop:['var(--stop-ink)','var(--stop-bg)']};
+
+const DETAILS = {
+pt:{
+  start:{lead:'A execução do ETL é iniciada manualmente. É possível rodar todas as fontes ou apenas um subconjunto escolhido, e em um de dois modos de carga (inicial ou incremental).'},
+  cfg:{lead:'Antes de tocar em qualquer fonte, o sistema reúne as configurações e confirma que nada obrigatório está faltando. Nenhum valor ou senha é exibido em tela.',
+    secs:[
+      {h:'De onde vêm as configurações',items:['De um arquivo de ambiente (<code>.env</code>) na raiz do projeto.']},
+      {h:'O que é obrigatório existir',items:['<b>Banco de dados:</b> host, porta, usuário, senha e nome do banco;','<b>Sistema da lavanderia:</b> chave de acesso (API) e identificador da empresa;','<b>Conta bancária 1:</b> usuário e senha;','<b>Conta bancária 2:</b> usuário e senha;','<b>E-mail:</b> servidor e porta (IMAP), usuário e senha;','<b>Pastas:</b> caminho base de apoio e pasta de downloads.']}
+    ]},
+  dCfg:{lead:'Ponto de decisão: todas as configurações obrigatórias foram encontradas?',
+    secs:[{h:'Sim',items:['O processo segue para preparar o banco de dados.']},{h:'Não',items:['A execução para imediatamente e informa apenas os nomes do que está faltando.']}]},
+  stopCfg:{lead:'Falta configuração obrigatória. A execução é encerrada de forma segura, antes de acessar o banco ou qualquer fonte.',
+    secs:[{h:'O que acontece',items:['Lista somente os nomes dos itens ausentes (sem expor valores);','Nenhuma fonte é acessada e nenhum navegador é aberto;','Nenhum dado é gravado.']}]},
+  db:{lead:'O sistema abre o acesso ao PostgreSQL para verificar o banco de destino. Ele conecta primeiro ao banco administrativo padrão, o que permite criar o banco de destino caso ele ainda não exista.'},
+  dDb:{lead:'Ponto de decisão: o banco de dados de destino (aquele cujo nome está na configuração) já existe no PostgreSQL?',
+    secs:[{h:'Sim',items:['Segue para reutilizar o banco existente.']},{h:'Não',items:['Segue para criar o banco do zero.']}]},
+  create:{lead:'O banco de dados de destino é criado vazio no PostgreSQL. A criação apenas monta o banco — ainda sem tabelas de dados. A estrutura interna é garantida na etapa seguinte.',
+    secs:[{h:'Importante',items:['A criação usa o nome definido na configuração;','É seguida pela etapa que garante a estrutura de armazenamento.']}]},
+  reuse:{lead:'O banco já existe e é reaproveitado exatamente como está.',
+    secs:[{h:'O que NÃO acontece',items:['Não recria o banco;','Não apaga tabelas;','Não limpa dados existentes.']}]},
+  struct:{lead:'Aqui os dois caminhos (criar ou reutilizar) se juntam. O sistema garante o espaço de armazenamento dos dados brutos, criando apenas o que estiver faltando.',
+    secs:[
+      {h:'O que é garantido',items:['Um recurso de texto para ignorar acentos na categorização financeira (<code>unaccent</code>);','O espaço de dados brutos (schema <code>raw</code>);','As <b>5 tabelas</b> de armazenamento bruto.']},
+      {h:'As cinco tabelas',items:['<code>raw.laundry_system</code> — Sistema de gestão da lavanderia;','<code>raw.bank1</code> — Conta bancária 1, conta corrente;','<code>raw.bank2</code> — Conta bancária 2, recebimentos;','<code>raw.bank1_cartao</code> — Conta bancária 1, fatura de cartão;','<code>raw.bank3</code> — Conta bancária 3, conta corrente.']},
+      {h:'Como cada registro é guardado',items:['Um identificador sequencial;','A data e hora da extração;','O conteúdo bruto em formato JSON;','Um código (hash) que evita gravar o mesmo conteúdo duas vezes.']}
+    ],
+    note:'Se uma tabela antiga já existir com formato diferente, esta etapa <b>não</b> a corrige automaticamente — isso exigiria uma migração específica.'},
+  dMode:{lead:'Ponto de decisão que define o modo de carga. O sistema olha as 5 tabelas brutas: todas já possuem pelo menos um registro?',
+    secs:[{h:'Sim → carga incremental',items:['Busca apenas os períodos mais recentes.']},{h:'Não → carga inicial completa',items:['Traz todo o histórico disponível.']}]},
+  inc:{lead:'Modo incremental: escolhido quando todas as tabelas brutas já têm dados. Em vez de buscar tudo de novo, o sistema traz apenas o que é novo.',
+    secs:[{h:'Como a janela de tempo é definida',items:[
+      'Para cada fonte, o sistema olha o <b>registro mais recente já carregado</b> — pela data/hora (o timestamp) da última extração bem-sucedida;',
+      'A partir desse ponto, monta uma <b>janela de extração</b> que vai daquela data até o momento atual;',
+      'A busca traz somente esse intervalo — ou seja, apenas os períodos <b>posteriores</b> ao que já existe no banco.']}],
+    note:'Assim, cada execução avança a partir de onde a anterior parou, sem reprocessar todo o histórico.'},
+  found:{lead:'Modo inicial (foundation): escolhido quando o espaço de dados é novo ou alguma tabela ainda está vazia. Faz uma carga ampla, trazendo todo o histórico.',
+    note:'<b>Atenção:</b> como a regra exige dados em <b>todas</b> as tabelas, uma fonte legitimamente vazia pode manter o sistema sempre em carga inicial.'},
+  extract:{lead:'Cada fonte é extraída e tem seu conteúdo guardado na camada bruta (RAW). As 5 fontes rodam em sequência, uma após a outra (nunca em paralelo).',
+    secs:[
+      {h:'As fontes, na ordem',items:[
+        '<b>1. Sistema de gestão da lavanderia</b> — por integração direta (API); traz vendas, máquinas, lavanderias e clientes;',
+        '<b>2. Conta bancária 1 — Conta corrente</b> — automação do internet banking, baixa o extrato em Excel;',
+        '<b>3. Conta bancária 2 — Recebimentos</b> — solicita o relatório no portal, que chega por e-mail e é baixado;',
+        '<b>4. Conta bancária 1 — Fatura de cartão</b> — lê PDFs de fatura colocados manualmente em uma pasta;',
+        '<b>5. Conta bancária 3 — Conta corrente</b> — lê um arquivo baixado manualmente.']},
+      {h:'Como cada registro é guardado',items:[
+        'O conteúdo entra como um <b>payload JSON</b>, preservando o formato original da fonte;',
+        'Para cada registro é criado um <b>hash</b> (uma impressão digital do conteúdo);',
+        'Esse hash é montado a partir dos <b>campos e valores do próprio registro</b> — e <b>não</b> considera a data/hora da extração;',
+        'Por isso, se o mesmo dado for extraído de novo, ele gera o mesmo hash e não é gravado em duplicidade.']}
+    ]},
+  dFail:{lead:'Ponto de decisão: alguma das fontes falhou durante a extração?',
+    secs:[{h:'Sim',items:['Interrompe tudo na hora (comportamento "fail-fast").']},{h:'Não',items:['Segue para transformar os dados.']}]},
+  stopFail:{lead:'Uma fonte falhou. O processo para imediatamente.',
+    secs:[{h:'Consequência',items:['As fontes seguintes não são executadas;','A transformação (Silver, Rules e Gold) não acontece;','Evita que uma execução "aparentemente concluída" esconda uma falha no meio.']}]},
+  transform:{lead:'Os dados brutos já foram carregados na camada RAW. Agora eles atravessam as camadas de transformação, cada uma com um papel — do bruto até a base analítica final.',
+    secs:[{h:'As quatro camadas, em ordem',items:[
+      '<b>RAW</b> — a cópia bruta que acabou de ser carregada (payload JSON preservado para auditoria e reprocessamento);',
+      '<b>Silver</b> — organiza o bruto em tabelas limpas, com colunas e tipos definidos (datas, números e textos padronizados);',
+      '<b>Rules</b> — carrega as regras de categorização: padrões, categorias padronizadas e ajustes manuais;',
+      '<b>Gold</b> — a base analítica final: dimensões e fatos, com as transações financeiras categorizadas e cada venda ligada ao seu recebimento.']}],
+    note:'A ordem é obrigatória: <b>Silver → Rules → Gold</b>. Cada camada depende da anterior.'},
+  end:{lead:'Fim do ETL. O resultado é um banco de dados analítico no formato de Data Warehouse: limpo, organizado e pronto para uso.',
+    secs:[{h:'O que fica pronto',items:[
+      'Um modelo com dimensões e fatos (a camada Gold), consistente e categorizado;',
+      'Dados operacionais e financeiros já integrados e reconciliados;',
+      'Pronto para ser consumido por ferramentas de análise, como o Power BI, que constroem modelo, medidas e visuais sobre ele.']}]},
+},
+en:{
+  start:{lead:'The ETL run is started manually. You can run all sources or just a chosen subset, in one of two load modes (initial or incremental).'},
+  cfg:{lead:'Before touching any source, the system gathers the configuration and confirms nothing required is missing. No value or password is shown on screen.',
+    secs:[
+      {h:'Where the configuration comes from',items:['From an environment file (<code>.env</code>) at the project root.']},
+      {h:'What must be present',items:['<b>Database:</b> host, port, user, password and database name;','<b>Laundry system:</b> access key (API) and company identifier;','<b>Bank account 1:</b> user and password;','<b>Bank account 2:</b> user and password;','<b>E-mail:</b> server and port (IMAP), user and password;','<b>Folders:</b> base support path and downloads folder.']}
+    ]},
+  dCfg:{lead:'Decision point: were all the required settings found?',
+    secs:[{h:'Yes',items:['The process moves on to prepare the database.']},{h:'No',items:['The run stops immediately and reports only the names of what is missing.']}]},
+  stopCfg:{lead:'A required setting is missing. The run ends safely, before accessing the database or any source.',
+    secs:[{h:'What happens',items:['Lists only the names of the missing items (without exposing values);','No source is accessed and no browser is opened;','No data is written.']}]},
+  db:{lead:'The system opens access to PostgreSQL to check the target database. It connects first to the default administrative database, which lets it create the target if it does not yet exist.'},
+  dDb:{lead:'Decision point: does the target database (the one named in the configuration) already exist in PostgreSQL?',
+    secs:[{h:'Yes',items:['Moves on to reuse the existing database.']},{h:'No',items:['Moves on to create the database from scratch.']}]},
+  create:{lead:'The target database is created empty in PostgreSQL. Creation only sets up the database — with no data tables yet. Its internal structure is ensured in the next step.',
+    secs:[{h:'Important',items:['Creation uses the name defined in the configuration;','It is followed by the step that ensures the storage structure.']}]},
+  reuse:{lead:'The database already exists and is reused exactly as it is.',
+    secs:[{h:'What does NOT happen',items:['It does not recreate the database;','It does not drop tables;','It does not clear existing data.']}]},
+  struct:{lead:'Here the two paths (create or reuse) merge. The system ensures the raw storage space, creating only what is missing.',
+    secs:[
+      {h:'What is ensured',items:['A text feature to ignore accents in financial categorization (<code>unaccent</code>);','The raw data space (the <code>raw</code> schema);','The <b>5 tables</b> for raw storage.']},
+      {h:'The five tables',items:['<code>raw.laundry_system</code> — Laundry management system;','<code>raw.bank1</code> — Bank account 1, checking account;','<code>raw.bank2</code> — Bank account 2, receivables;','<code>raw.bank1_cartao</code> — Bank account 1, card statement;','<code>raw.bank3</code> — Bank account 3, checking account.']},
+      {h:'How each record is stored',items:['A sequential identifier;','The extraction date and time;','The raw content in JSON format;','A code (hash) that prevents storing the same content twice.']}
+    ],
+    note:'If an old table already exists with a different shape, this step does <b>not</b> fix it automatically — that would require a specific migration.'},
+  dMode:{lead:'Decision point that sets the load mode. The system looks at the 5 raw tables: do all of them already hold at least one record?',
+    secs:[{h:'Yes → incremental load',items:['Fetches only the most recent periods.']},{h:'No → full initial load',items:['Brings the entire available history.']}]},
+  inc:{lead:'Incremental mode: chosen when all raw tables already have data. Instead of fetching everything again, the system brings only what is new.',
+    secs:[{h:'How the time window is defined',items:[
+      'For each source, the system looks at the <b>most recent record already loaded</b> — by the date/time (timestamp) of the last successful extraction;',
+      'From that point, it builds an <b>extraction window</b> running from that date up to the present moment;',
+      'The query fetches only that interval — that is, only the periods <b>after</b> what already exists in the database.']}],
+    note:'This way each run continues from where the previous one stopped, without reprocessing the entire history.'},
+  found:{lead:'Initial (foundation) mode: chosen when the data space is new or some table is still empty. It runs a broad load, bringing the whole history.',
+    note:'<b>Note:</b> since the rule requires data in <b>all</b> tables, a legitimately empty source can keep the system permanently in initial load.'},
+  extract:{lead:'Each source is extracted and its content is stored in the raw layer (RAW). The 5 sources run in sequence, one after another (never in parallel).',
+    secs:[
+      {h:'The sources, in order',items:[
+        '<b>1. Laundry management system</b> — via direct integration (API); brings sales, machines, stores and customers;',
+        '<b>2. Bank account 1 — Checking account</b> — internet-banking automation, downloads the statement as Excel;',
+        '<b>3. Bank account 2 — Receivables</b> — requests the report in the portal, which arrives by e-mail and is downloaded;',
+        '<b>4. Bank account 1 — Card statement</b> — reads statement PDFs placed manually in a folder;',
+        '<b>5. Bank account 3 — Checking account</b> — reads a file downloaded manually.']},
+      {h:'How each record is stored',items:[
+        'The content is stored as a <b>JSON payload</b>, preserving the source’s original format;',
+        'For each record a <b>hash</b> is created (a fingerprint of the content);',
+        'This hash is built from the <b>record’s own fields and values</b> — and does <b>not</b> include the extraction date/time;',
+        'So if the same data is extracted again, it produces the same hash and is not stored twice.']}
+    ]},
+  dFail:{lead:'Decision point: did any of the sources fail during extraction?',
+    secs:[{h:'Yes',items:['Stops everything right away ("fail-fast" behavior).']},{h:'No',items:['Moves on to transform the data.']}]},
+  stopFail:{lead:'A source failed. The process stops immediately.',
+    secs:[{h:'Consequence',items:['The remaining sources are not run;','The transformation (Silver, Rules and Gold) does not happen;','It prevents a "seemingly finished" run from hiding a failure in the middle.']}]},
+  transform:{lead:'The raw data has already been loaded into the RAW layer. Now it moves through the transformation layers, each with a role — from raw to the final analytical base.',
+    secs:[{h:'The four layers, in order',items:[
+      '<b>RAW</b> — the raw copy just loaded (JSON payload preserved for auditing and reprocessing);',
+      '<b>Silver</b> — organizes the raw content into clean tables, with defined columns and types (dates, numbers and standardized text);',
+      '<b>Rules</b> — loads the categorization rules: patterns, standardized categories and manual adjustments;',
+      '<b>Gold</b> — the final analytical base: dimensions and facts, with financial transactions categorized and each sale linked to its receivable.']}],
+    note:'The order is mandatory: <b>Silver → Rules → Gold</b>. Each layer depends on the previous one.'},
+  end:{lead:'End of the ETL. The result is an analytical database in Data Warehouse form: clean, organized and ready to use.',
+    secs:[{h:'What is ready',items:[
+      'A model with dimensions and facts (the Gold layer), consistent and categorized;',
+      'Operational and financial data already integrated and reconciled;',
+      'Ready to be consumed by analytics tools, such as Power BI, which build the model, measures and visuals on top of it.']}]},
+}
+};
+
+const world=document.getElementById('world'), svg=document.getElementById('wires');
+const NS='http://www.w3.org/2000/svg';
+
+let maxX=0,maxY=0;
+for(const k in NODES){const n=NODES[k];maxX=Math.max(maxX,n.x+n.w);maxY=Math.max(maxY,n.y+n.h);}
+const W=maxX+60,H=maxY+60;
+world.style.width=W+'px';world.style.height=H+'px';
+svg.setAttribute('width',W);svg.setAttribute('height',H);svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+
+function anchor(n,s){const cx=n.x+n.w/2,cy=n.y+n.h/2;
+  return s==='top'?{x:cx,y:n.y}:s==='bottom'?{x:cx,y:n.y+n.h}:s==='left'?{x:n.x,y:cy}:{x:n.x+n.w,y:cy};}
+function points(a,b,as,bs){
+  if(as==='bottom'&&bs==='top'){ if(Math.abs(a.x-b.x)<1)return[a,b];
+    const my=(a.y+b.y)/2;return[a,{x:a.x,y:my},{x:b.x,y:my},b];}
+  if((as==='right'&&bs==='left')||(as==='left'&&bs==='right')){ if(Math.abs(a.y-b.y)<1)return[a,b];
+    const mx=(a.x+b.x)/2;return[a,{x:mx,y:a.y},{x:mx,y:b.y},b];}
+  return[a,b];
+}
+function roundPath(pts,r){
+  if(pts.length<3)return`M${pts[0].x},${pts[0].y} L${pts[pts.length-1].x},${pts[pts.length-1].y}`;
+  let d=`M${pts[0].x},${pts[0].y}`;
+  for(let i=1;i<pts.length-1;i++){const p0=pts[i-1],p1=pts[i],p2=pts[i+1];
+    const v1={x:p1.x-p0.x,y:p1.y-p0.y},v2={x:p2.x-p1.x,y:p2.y-p1.y};
+    const l1=Math.hypot(v1.x,v1.y)||1,l2=Math.hypot(v2.x,v2.y)||1;const rr=Math.min(r,l1/2,l2/2);
+    const A={x:p1.x-v1.x/l1*rr,y:p1.y-v1.y/l1*rr},B={x:p1.x+v2.x/l2*rr,y:p1.y+v2.y/l2*rr};
+    d+=` L${A.x},${A.y} Q${p1.x},${p1.y} ${B.x},${B.y}`;}
+  const last=pts[pts.length-1];d+=` L${last.x},${last.y}`;return d;
+}
+
+const edgeLabels=[];
+EDGES.forEach((e,i)=>{
+  const[f,fs,t,ts,,tone,stop]=e;
+  const a=anchor(NODES[f],fs),b=anchor(NODES[t],ts),pts=points(a,b,fs,ts);
+  const p=document.createElementNS(NS,'path');
+  p.setAttribute('d',roundPath(pts,16));
+  p.setAttribute('class','wpath'+(stop?' stop':''));
+  p.setAttribute('marker-end',stop?'url(#arrow-stop)':'url(#arrow)');
+  p.style.animationDelay=(0.2+i*0.045)+'s';svg.appendChild(p);
+  if(tone){
+    const l=document.createElement('div');l.className='elbl '+tone;
+    l.style.left=((pts[0].x+pts[1].x)/2)+'px';l.style.top=((pts[0].y+pts[1].y)/2)+'px';
+    l.style.animationDelay=(0.4+i*0.045)+'s';world.appendChild(l);
+    edgeLabels.push({el:l,tone});
+  }
+});
+
+const clsFor={start:'n-term n-start',end:'n-term n-end',proc:'n-proc',act:'n-act',mode:'n-mode',stop:'n-stop',dec:'n-dec'};
+let ni=0;
+for(const k in NODES){
+  const n=NODES[k];
+  const el=document.createElement('div');
+  el.className='node '+clsFor[n.kind];el.dataset.id=k;
+  el.style.left=n.x+'px';el.style.top=n.y+'px';el.style.width=n.w+'px';el.style.height=n.h+'px';
+  el.style.animationDelay=(ni*0.055)+'s';ni++;
+  if(n.kind==='dec'){
+    el.innerHTML='<div class="inner"><span class="eye"></span><div class="ttl"></div><span class="diamark">＋</span></div>';
+    n._eyeEl=el.querySelector('.eye');
+  }else{
+    el.innerHTML='<div class="ttl"></div>'+(n.sub?'<div class="sub"></div>':'')+'<span class="plus">＋</span>';
+  }
+  n._ttlEl=el.querySelector('.ttl');
+  n._subEl=el.querySelector('.sub');
+  el.addEventListener('click',ev=>{ev.stopPropagation();open(k,el);});
+  world.appendChild(el);n._el=el;
+}
+
+const drawer=document.getElementById('drawer');
+const dwBadge=document.getElementById('dwBadge'),dwTitle=document.getElementById('dwTitle'),dwBody=document.getElementById('dwBody');
+let activeEl=null,activeId=null;
+function fillDrawer(id){
+  const n=NODES[id],d=(DETAILS[LANG][id])||{lead:''};
+  const[col,bg]=BADGE_STYLE[n.kind];
+  dwBadge.textContent=UI[LANG].badges[n.kind];dwBadge.style.color=col;dwBadge.style.background=bg;
+  dwTitle.textContent=n.ttl[LANG];
+  let html='<p class="dw-lead">'+(d.lead||'')+'</p>';
+  (d.secs||[]).forEach(s=>{html+='<div class="dw-sec"><h4>'+s.h+'</h4><ul>'+s.items.map(it=>'<li>'+it+'</li>').join('')+'</ul></div>';});
+  if(d.note)html+='<div class="dw-note">'+d.note+'</div>';
+  dwBody.innerHTML=html;dwBody.scrollTop=0;
+}
+function open(id,el){
+  activeId=id;fillDrawer(id);
+  drawer.classList.add('open');drawer.setAttribute('aria-hidden','false');
+  if(activeEl)activeEl.classList.remove('active');
+  el.classList.add('active');activeEl=el;focus(NODES[id]);
+}
+function closeDrawer(){
+  drawer.classList.remove('open');drawer.setAttribute('aria-hidden','true');
+  if(activeEl){activeEl.classList.remove('active');activeEl=null;}activeId=null;
+}
+document.getElementById('dwClose').onclick=closeDrawer;
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer();});
+
+function applyLang(){
+  const u=UI[LANG];
+  document.querySelectorAll('#flowLegend .lg-t').forEach((s,i)=>s.textContent=u.legend[i]);
+  document.getElementById('fit').textContent=u.fit;
+  document.getElementById('dwClose').textContent=u.close;
+  for(const k in NODES){const n=NODES[k];
+    if(n._ttlEl)n._ttlEl.textContent=n.ttl[LANG];
+    if(n._subEl&&n.sub)n._subEl.textContent=n.sub[LANG];
+    if(n._eyeEl)n._eyeEl.textContent=u.eyebrow;}
+  edgeLabels.forEach(o=>o.el.textContent=(o.tone==='yes'?u.yes:u.no));
+  if(activeId)fillDrawer(activeId);
+}
+
+const canvas=document.getElementById('canvas'),pct=document.getElementById('pct');
+let scale=1,tx=0,ty=0;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function apply(){world.style.transform=`translate(${tx}px,${ty}px) scale(${scale})`;pct.textContent=Math.round(scale*100)+'%';}
+function initialView(){
+  const vw=canvas.clientWidth||window.innerWidth;
+  scale=clamp(Math.min(1.05,(vw-56)/780),0.55,1.1);
+  tx=vw/2-470*scale;ty=24;apply();
+}
+function fit(){
+  const vw=canvas.clientWidth,vh=canvas.clientHeight;
+  scale=clamp(Math.min(vw/W,vh/H)*0.92,0.3,1.4);
+  tx=(vw-W*scale)/2;ty=(vh-H*scale)/2+4;apply();
+}
+function focus(n){
+  const cx=n.x+n.w/2,cy=n.y+n.h/2,vw=canvas.clientWidth,vh=canvas.clientHeight;
+  const rightRoom=Math.min(400,vw*0.88);
+  tx=(vw-rightRoom)*0.5-cx*scale;ty=vh*0.44-cy*scale;
+  world.style.transition='transform .5s cubic-bezier(.2,.7,.3,1)';apply();
+  setTimeout(()=>{world.style.transition='';},520);
+}
+function zoomAt(ns,mx,my){ns=clamp(ns,0.3,2.4);
+  const wx=(mx-tx)/scale,wy=(my-ty)/scale;scale=ns;tx=mx-wx*scale;ty=my-wy*scale;apply();}
+document.getElementById('zin').onclick=()=>zoomAt(scale*1.2,canvas.clientWidth/2,canvas.clientHeight/2);
+document.getElementById('zout').onclick=()=>zoomAt(scale/1.2,canvas.clientWidth/2,canvas.clientHeight/2);
+document.getElementById('fit').onclick=fit;
+canvas.addEventListener('wheel',e=>{e.preventDefault();
+  const r=canvas.getBoundingClientRect(),factor=e.ctrlKey?0.012:0.0016;
+  zoomAt(scale*(1-e.deltaY*factor),e.clientX-r.left,e.clientY-r.top);},{passive:false});
+let drag=false,moved=false,sx,sy,ox,oy;
+canvas.addEventListener('pointerdown',e=>{
+  if(e.target.closest('button')||e.target.closest('.node'))return;
+  drag=true;moved=false;sx=e.clientX;sy=e.clientY;ox=tx;oy=ty;
+  canvas.classList.add('grabbing');canvas.setPointerCapture(e.pointerId);});
+canvas.addEventListener('pointermove',e=>{if(!drag)return;
+  tx=ox+(e.clientX-sx);ty=oy+(e.clientY-sy);
+  if(Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy)>4)moved=true;apply();});
+function endDrag(){if(drag&&!moved)closeDrawer();drag=false;canvas.classList.remove('grabbing');}
+canvas.addEventListener('pointerup',endDrag);
+canvas.addEventListener('pointercancel',endDrag);
+
+applyLang();
+initialView();
+
+window.__views.flow = { setLang:function(l){ applyLang(); }, onShow:function(){ /* mantém posição atual */ } };
+})();
+
+/* ===================== VIEW SOURCES (IIFE) ===================== */
+(function(){
+const ICON = {
+  api:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>',
+  brw:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/><circle cx="6.5" cy="6.5" r=".6" fill="currentColor"/><circle cx="9" cy="6.5" r=".6" fill="currentColor"/></svg>',
+  file:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></svg>'
+};
+
+const FAMILIES = {
+  api:{icon:'api', color:'var(--fam-api)', bg:'var(--fam-api-bg)', name:{pt:'Integração direta (API)',en:'Direct integration (API)'}},
+  brw:{icon:'brw', color:'var(--fam-brw)', bg:'var(--fam-brw-bg)', name:{pt:'Automação de navegador',en:'Browser automation'}},
+  file:{icon:'file',color:'var(--fam-file)',bg:'var(--fam-file-bg)',name:{pt:'Arquivo local',en:'Local file'}},
+};
+
+const SOURCES = [
+  { id:'laundry', fam:'api', num:'01',
+    name:{pt:'Sistema de gestão da lavanderia',en:'Laundry management system'},
+    objetivo:{pt:'Extrair os dados operacionais direto da API do sistema de gestão.',en:'Extract operational data directly from the management system’s API.'},
+    acesso:{pt:['Autentica na API com a chave de acesso e o identificador da empresa;','Calcula as janelas de tempo a extrair;','Busca as vendas — uma chamada por janela;','Coleta máquinas, lavanderias e clientes (uma vez por execução);','Guarda cada entidade na camada bruta.'],
+            en:['Authenticates to the API with the access key and company identifier;','Calculates the time windows to extract;','Fetches sales — one call per window;','Collects machines, stores and customers (once per run);','Stores each entity in the raw layer.']},
+    manual:'auto', manualTxt:{pt:'Nenhuma — só a autenticação da API.',en:'None — only the API authentication.'}, manualShort:{pt:'Automática',en:'Automatic'},
+    formato:{pt:'JSON (API)',en:'JSON (API)'}, destino:'raw.laundry_system',
+    janela:true, janelaTxt:{pt:'Sim — as vendas são buscadas por janelas de tempo.',en:'Yes — sales are fetched by time windows.'},
+    fail:'stop', failTxt:{pt:'Encerra o processo conforme a exceção. Sem janelas a buscar, retorna “sem dados” e termina sem gravar.',en:'Ends the process according to the exception. With no windows to fetch, it returns “no data” and ends without writing.'},
+    failShort:{pt:'Interrompe tudo',en:'Stops everything'},
+    atencao:{pt:'Quando não há janelas de tempo, retorna “sem dados” e não persiste — não é erro, mas convém saber.',en:'When there are no time windows, it returns “no data” and does not persist — not an error, but worth knowing.'} },
+
+  { id:'bank1', fam:'brw', num:'02',
+    name:{pt:'Conta bancária 1 — Conta corrente',en:'Bank account 1 — Checking account'},
+    objetivo:{pt:'Automatizar o internet banking para baixar o extrato da conta corrente.',en:'Automate the internet banking to download the checking-account statement.'},
+    acesso:{pt:['Abre uma sessão de navegador (Chrome);','Faz login e, se pedido, atende o token/2FA;','Navega até Extratos → Conta corrente;','Para cada janela: define as datas, busca e exporta o Excel;','Aguarda o download, lê os arquivos e guarda na camada bruta;','Limpa a pasta temporária ao final.'],
+            en:['Opens a browser session (Chrome);','Logs in and, if requested, handles the token/2FA;','Navigates to Statements → Checking account;','For each window: sets the dates, searches and exports the Excel;','Waits for the download, reads the files and stores them in the raw layer;','Cleans the temporary folder at the end.']},
+    manual:'manual', manualTxt:{pt:'Pode exigir token/2FA no login.',en:'May require a token/2FA at login.'}, manualShort:{pt:'Token/2FA',en:'Token/2FA'},
+    formato:{pt:'Excel',en:'Excel'}, destino:'raw.bank1',
+    janela:true, janelaTxt:{pt:'Sim — baixa por janelas de datas.',en:'Yes — downloads by date windows.'},
+    fail:'stop', failTxt:{pt:'Qualquer erro encerra o pipeline e o processo inteiro. O navegador é sempre fechado, mesmo em falha.',en:'Any error ends the pipeline and the whole process. The browser is always closed, even on failure.'},
+    failShort:{pt:'Interrompe tudo',en:'Stops everything'},
+    atencao:{pt:'As telas do portal recarregam sozinhas e podem “perder” o elemento em uso. Ainda falta aplicar aqui o mesmo padrão de nova tentativa que a Conta 2 já usa.',en:'The portal screens re-render on their own and may “lose” the element in use. It still needs the same retry pattern that account 2 already uses.'} },
+
+  { id:'bank2', fam:'brw', num:'03',
+    name:{pt:'Conta bancária 2 — Recebimentos',en:'Bank account 2 — Receivables'},
+    objetivo:{pt:'Solicitar o relatório de recebimentos no portal, recebê-lo por e-mail e carregá-lo.',en:'Request the receivables report in the portal, receive it by e-mail and load it.'},
+    acesso:{pt:['Faz login no portal do banco;','Configura o período do relatório;','Solicita o envio do relatório para o e-mail configurado;','Acessa a caixa de e-mail (IMAP) e localiza a mensagem;','Baixa o relatório, lê o CSV e guarda na camada bruta;','Limpa a pasta temporária.'],
+            en:['Logs into the bank portal;','Sets the report period;','Requests the report to be sent to the configured e-mail;','Accesses the mailbox (IMAP) and finds the message;','Downloads the report, reads the CSV and stores it in the raw layer;','Cleans the temporary folder.']},
+    manual:'manual', manualTxt:{pt:'Depende da entrega do relatório por e-mail (disparada a partir do portal).',en:'Depends on the report being delivered by e-mail (triggered from the portal).'}, manualShort:{pt:'Entrega por e-mail',en:'E-mail delivery'},
+    formato:{pt:'CSV / relatório',en:'CSV / report'}, destino:'raw.bank2',
+    janela:true, janelaTxt:{pt:'Sim — configura o período no portal.',en:'Yes — sets the period in the portal.'},
+    fail:'stop', failTxt:{pt:'Se a extração não retorna sucesso, interrompe tudo — as fontes seguintes e a transformação não rodam.',en:'If the extraction does not return success, everything stops — the remaining sources and the transformation do not run.'},
+    failShort:{pt:'Interrompe tudo',en:'Stops everything'},
+    atencao:{pt:'É a fonte “modelo”: já tem o padrão de nova tentativa para telas que recarregam (relocaliza o elemento e limita as tentativas).',en:'This is the “reference” source: it already has the retry pattern for re-rendering screens (re-locates the element and limits attempts).'} },
+
+  { id:'bank1cartao', fam:'file', num:'04',
+    name:{pt:'Conta bancária 1 — Fatura de cartão',en:'Bank account 1 — Card statement'},
+    objetivo:{pt:'Ler os PDFs de fatura colocados manualmente numa pasta e guardar as transações.',en:'Read the statement PDFs placed manually in a folder and store the transactions.'},
+    acesso:{pt:['Não usa navegador, login nem janela de datas;','Verifica se a pasta de faturas foi configurada e existe;','Lê e interpreta os PDFs da pasta;','Consolida as transações e guarda na camada bruta.'],
+            en:['Uses no browser, login or date window;','Checks that the statements folder is configured and exists;','Reads and parses the PDFs in the folder;','Consolidates the transactions and stores them in the raw layer.']},
+    manual:'manual', manualTxt:{pt:'Sim — os PDFs precisam ser colocados na pasta antes da execução.',en:'Yes — the PDFs must be placed in the folder before the run.'}, manualShort:{pt:'Arquivo manual',en:'Manual file'},
+    formato:{pt:'PDF',en:'PDF'}, destino:'raw.bank1_cartao',
+    janela:false, janelaTxt:{pt:'Não — lê o que estiver na pasta.',en:'No — reads whatever is in the folder.'},
+    fail:'stop', failTxt:{pt:'Pasta não configurada, caminho inexistente ou nenhuma transação encontrada: lança erro e encerra o processo.',en:'Folder not configured, path missing or no transaction found: raises an error and ends the process.'},
+    failShort:{pt:'Interrompe tudo',en:'Stops everything'},
+    atencao:{pt:'Depende de alguém ter disponibilizado os PDFs antes de rodar.',en:'Depends on someone having provided the PDFs before running.'} },
+
+  { id:'bank3', fam:'file', num:'05',
+    name:{pt:'Conta bancária 3 — Conta corrente',en:'Bank account 3 — Checking account'},
+    objetivo:{pt:'Processar um arquivo de conta corrente baixado manualmente.',en:'Process a checking-account file downloaded manually.'},
+    acesso:{pt:['Não abre o portal, não usa navegador nem login;','Verifica se a pasta configurada existe;','Lê o arquivo e força a identificação da fonte;','Interpreta os dados e, havendo conteúdo, guarda na camada bruta.'],
+            en:['Does not open the portal, use a browser or log in;','Checks that the configured folder exists;','Reads the file and forces the source identification;','Parses the data and, if there is content, stores it in the raw layer.']},
+    manual:'manual', manualTxt:{pt:'Sim — o arquivo é baixado manualmente e colocado na pasta.',en:'Yes — the file is downloaded manually and placed in the folder.'}, manualShort:{pt:'Arquivo manual',en:'Manual file'},
+    formato:{pt:'Arquivo bancário',en:'Bank file'}, destino:'raw.bank3',
+    janela:false, janelaTxt:{pt:'Não.',en:'No.'},
+    fail:'warn', failTxt:{pt:'Diferente das demais: se o arquivo não for reconhecido ou vier vazio, apenas emite um aviso e segue — não interrompe o processo.',en:'Unlike the others: if the file is not recognized or comes empty, it only issues a warning and continues — it does not stop the process.'},
+    failShort:{pt:'Só avisa e segue',en:'Warns and continues'},
+    atencao:{pt:'É a única fonte que pode passar “em silêncio”: o processo pode se considerar concluído sem dados novos desta conta, e a transformação ainda roda. Vale conferir manualmente.',en:'The only source that can pass “silently”: the process may consider itself finished with no new data from this account, and the transformation still runs. Worth checking manually.'} },
+];
+
+const UI = {
+  pt:{ eyebrow:'Documentação · Parte 2', title:'Fontes de dados',
+    lead:'O ETL consolida cinco fontes externas. O que muda entre elas é, principalmente, o método de aquisição — e é por ele que as agrupamos.',
+    stats:[['5','fontes externas'],['3','métodos de aquisição'],['1','exceção ao “fail-fast”','warn']],
+    manualLegend:'Interação manual',
+    mtxTitle:'Visão geral', mtxSub:'Todas as fontes lado a lado.',
+    mtxHead:['Fonte','Método','Interação manual','Formato → destino','Janela de tempo','Se falhar'],
+    cardsTitle:'Detalhe por fonte', cardsSub:'Agrupadas pela família de método de aquisição.',
+    lblObj:'Objetivo', lblAcc:'Como é acessada', lblMan:'Interação manual', lblFmt:'Formato → destino RAW',
+    lblWin:'Janela de tempo', lblFail:'Se falhar', lblNote:'Ponto de atenção',
+    countSuffix:s=> s===1?'fonte':'fontes' },
+  en:{ eyebrow:'Documentation · Part 2', title:'Data sources',
+    lead:'The ETL consolidates five external sources. What mostly differs between them is the acquisition method — and that is how we group them.',
+    stats:[['5','external sources'],['3','acquisition methods'],['1','exception to “fail-fast”','warn']],
+    manualLegend:'Manual interaction',
+    mtxTitle:'Overview', mtxSub:'All sources side by side.',
+    mtxHead:['Source','Method','Manual interaction','Format → destination','Time window','If it fails'],
+    cardsTitle:'Detail by source', cardsSub:'Grouped by acquisition-method family.',
+    lblObj:'Goal', lblAcc:'How it is accessed', lblMan:'Manual interaction', lblFmt:'Format → RAW destination',
+    lblWin:'Time window', lblFail:'If it fails', lblNote:'Watch out',
+    countSuffix:s=> s===1?'source':'sources' },
+};
+
+const $=id=>document.getElementById('s_'+id);
+
+function render(){
+  const u=UI[LANG];
+  $('uiEyebrow').textContent=u.eyebrow;
+  $('uiTitle').textContent=u.title;
+  $('uiLead').textContent=u.lead;
+
+  $('uiStats').innerHTML=u.stats.map(s=>`<div class="stat ${s[2]||''}"><div class="n">${s[0]}</div><div class="l">${s[1]}</div></div>`).join('');
+
+  const fams=Object.keys(FAMILIES);
+  $('uiLegend').innerHTML=fams.map(f=>{const F=FAMILIES[f];
+    return `<span class="fchip"><span class="ic" style="background:${F.bg};color:${F.color}">${ICON[F.icon]}</span>${F.name[LANG]}</span>`;
+  }).join('')+`<span class="fchip manual"><span class="d" style="width:8px;height:8px;border-radius:50%;background:var(--warn-bd)"></span>${u.manualLegend}</span>`;
+
+  $('mtxTitle').textContent=u.mtxTitle; $('mtxSub').textContent=u.mtxSub;
+  $('cardsTitle').textContent=u.cardsTitle; $('cardsSub').textContent=u.cardsSub;
+
+  $('mtxHead').innerHTML=u.mtxHead.map(h=>`<th>${h}</th>`).join('');
+  $('mtxBody').innerHTML=SOURCES.map(s=>{
+    const F=FAMILIES[s.fam];
+    const man = s.manual==='manual'
+      ? `<span class="pill manual">${s.manualShort[LANG]}</span>`
+      : `<span class="pill auto">${s.manualShort[LANG]}</span>`;
+    const win = s.janela?`<span class="pill yes">${LANG==='en'?'Yes':'Sim'}</span>`:`<span class="pill no">${LANG==='en'?'No':'Não'}</span>`;
+    const fail = `<span class="pill ${s.fail}">${s.failShort[LANG]}</span>`;
+    return `<tr>
+      <td><div class="src-cell" style="--fc:${F.color}"><div class="nm">${s.name[LANG]}</div></div></td>
+      <td><span class="fam-tag" style="--fc:${F.color}"><span class="dot"></span>${F.name[LANG]}</span></td>
+      <td>${man}</td>
+      <td>${s.formato[LANG]} → <code>${s.destino}</code></td>
+      <td>${win}</td>
+      <td>${fail}</td>
+    </tr>`;
+  }).join('');
+
+  $('famWrap').innerHTML=fams.map(f=>{
+    const F=FAMILIES[f];
+    const list=SOURCES.filter(s=>s.fam===f);
+    const cards=list.map(s=>{
+      const manClass = s.manual==='manual'?'manual':'auto';
+      return `<article class="src" style="--fc:${F.color}">
+        <div class="src-top">
+          <span class="src-num">${s.num}</span>
+          <div class="src-name">${s.name[LANG]}</div>
+          <span class="chip ${manClass}"><span class="d"></span>${s.manualShort[LANG]}</span>
+        </div>
+        <div class="src-body">
+          <div class="fld"><h5>${u.lblObj}</h5><p>${s.objetivo[LANG]}</p></div>
+          <div class="fld"><h5>${u.lblAcc}</h5><ol>${s.acesso[LANG].map(x=>`<li>${x}</li>`).join('')}</ol></div>
+          <div class="fld-2">
+            <div class="fld"><h5>${u.lblFmt}</h5><p>${s.formato[LANG]} → <code>${s.destino}</code></p></div>
+            <div class="fld"><h5>${u.lblWin}</h5><p>${s.janelaTxt[LANG]}</p></div>
+          </div>
+          <div class="fld"><h5>${u.lblMan}</h5><p>${s.manualTxt[LANG]}</p></div>
+          <div class="fld"><h5>${u.lblFail}</h5><span class="fail ${s.fail}">${s.failTxt[LANG]}</span></div>
+        </div>
+        <div class="src-note"><b>${u.lblNote}</b>${s.atencao[LANG]}</div>
+      </article>`;
+    }).join('');
+    return `<div class="fam">
+      <div class="fam-band" style="--fc:${F.color}">
+        <span class="ic" style="background:${F.bg};color:${F.color}">${ICON[F.icon]}</span>
+        <div class="txt"><div class="h">${F.name[LANG]}</div><div class="c">${list.length} ${u.countSuffix(list.length)}</div></div>
+        <span class="rule"></span>
+      </div>
+      <div class="grid ${list.length===1?'one':''}">${cards}</div>
+    </div>`;
+  }).join('');
+}
+
+render();
+window.__views.sources = { setLang:function(l){ render(); } };
+})();
+
+/* ===================== VIEW LAYERS (IIFE) ===================== */
+(function(){
+const LAYERS = [
+  { id:'raw', color:'var(--raw)', bg:'var(--raw-bg)', name:'RAW',
+    role:{pt:'Preservar',en:'Preserve'},
+    roleLine:{pt:'Guarda a cópia bruta, do jeito que veio.',en:'Keeps the raw copy, exactly as received.'},
+    contem:{pt:'Cada registro como um <b>payload JSON</b>, com a data/hora da extração e um <b>hash</b> de conteúdo.',en:'Each record as a <b>JSON payload</b>, with the extraction timestamp and a content <b>hash</b>.'},
+    io:{pt:'5 fontes externas → 5 tabelas <code>raw.*</code>',en:'5 external sources → 5 <code>raw.*</code> tables'},
+    carga:{pt:'Incremental ou inicial. Grava em lote e ignora conteúdo repetido (deduplica pelo hash).',en:'Incremental or initial. Batch insert, ignoring repeated content (deduplicated by the hash).'},
+    elementos:{pt:'<code>raw.laundry_system</code>, <code>raw.bank1</code>, <code>raw.bank2</code>, <code>raw.bank1_cartao</code>, <code>raw.bank3</code>.',en:'<code>raw.laundry_system</code>, <code>raw.bank1</code>, <code>raw.bank2</code>, <code>raw.bank1_cartao</code>, <code>raw.bank3</code>.'},
+    atencao:{pt:'O hash deduplica pelo conteúdo bruto — não é uma chave de negócio. Pequenas diferenças de texto ou formato podem parecer registros novos.',en:'The hash deduplicates by raw content — it is not a business key. Small text or format differences can look like new records.'},
+    m:{contain:{pt:'Payload JSON + hash',en:'JSON payload + hash'}, from:{pt:'5 fontes externas',en:'5 external sources'}, load:'load', loadTxt:{pt:'Incremental / inicial',en:'Incremental / initial'}, consume:{pt:'Silver',en:'Silver'}} },
+
+  { id:'silver', color:'var(--silver)', bg:'var(--silver-bg)', name:'Silver',
+    role:{pt:'Estruturar',en:'Structure'},
+    roleLine:{pt:'Abre o bruto em tabelas limpas e tipadas.',en:'Opens the raw content into clean, typed tables.'},
+    contem:{pt:'Tabelas relacionais com colunas e tipos definidos (datas, números e textos padronizados).',en:'Relational tables with defined columns and types (dates, numbers and standardized text).'},
+    io:{pt:'RAW → tabelas tipadas',en:'RAW → typed tables'},
+    carga:{pt:'Reconstrói tudo a cada execução: limpa a tabela e recarrega a partir da RAW.',en:'Rebuilds everything each run: truncates the table and reloads from RAW.'},
+    elementos:{pt:'Uma tabela estruturada por fonte, derivada das 5 tabelas <code>raw.*</code>.',en:'One structured table per source, derived from the 5 <code>raw.*</code> tables.'},
+    atencao:{pt:'A reconstrução total é simples e consistente, mas fica mais cara conforme o histórico cresce, e depende da RAW completa disponível.',en:'The full rebuild is simple and consistent, but grows costlier as history grows, and it depends on the full RAW being available.'},
+    m:{contain:{pt:'Tabelas tipadas',en:'Typed tables'}, from:{pt:'RAW',en:'RAW'}, load:'rebuild', loadTxt:{pt:'Reconstrução total',en:'Full rebuild'}, consume:{pt:'Gold',en:'Gold'}} },
+
+  { id:'rules', color:'var(--rules)', bg:'var(--rules-bg)', name:'Rules',
+    role:{pt:'Classificar',en:'Classify'},
+    roleLine:{pt:'Prepara as regras que a Gold usa para categorizar.',en:'Prepares the rules the Gold layer uses to categorize.'},
+    contem:{pt:'Padrões (regex), categorias padronizadas, ajustes manuais e overrides de transações.',en:'Patterns (regex), standardized categories, manual adjustments and transaction overrides.'},
+    io:{pt:'Configuração do projeto → tabelas de regra',en:'Project configuration → rule tables'},
+    carga:{pt:'Reconstrói tudo a cada execução, a partir das configurações atuais.',en:'Rebuilds everything each run, from the current configuration.'},
+    elementos:{pt:'Ajustes manuais · regras regex · categorias padronizadas · detalhes de transações.',en:'Manual adjustments · regex rules · standardized categories · transaction details.'},
+    atencao:{pt:'Depende de <b>dois arquivos privados fora do Git</b> (contêm dados reais), que precisam ser restaurados antes de rodar. Os nomes das categorias não devem ser renomeados sem análise — eles viram rótulos no Power BI.',en:'Depends on <b>two private files kept outside Git</b> (they hold real data), which must be restored before running. Category names must not be renamed without analysis — they become labels in Power BI.'},
+    m:{contain:{pt:'Regras de categorização',en:'Categorization rules'}, from:{pt:'Configuração do projeto',en:'Project configuration'}, load:'rebuild', loadTxt:{pt:'Reconstrução total',en:'Full rebuild'}, consume:{pt:'Gold',en:'Gold'}} },
+
+  { id:'gold', color:'var(--gold)', bg:'var(--gold-bg)', name:'Gold', isGold:true,
+    role:{pt:'Disponibilizar',en:'Serve'},
+    roleLine:{pt:'Monta o modelo analítico pronto para consumo.',en:'Builds the analytical model ready for consumption.'},
+    contem:{pt:'Dimensões e fatos, com as transações financeiras já categorizadas.',en:'Dimensions and facts, with financial transactions already categorized.'},
+    io:{pt:'Silver + Rules → modelo analítico',en:'Silver + Rules → analytical model'},
+    carga:{pt:'Reconstrói tudo a cada execução, calculando a partir da Silver e da Rules.',en:'Rebuilds everything each run, computed from Silver and Rules.'},
+    elementos:{pt:'<b>Dimensões:</b> bancos, lavanderias, clientes, máquinas, meios de pagamento, falhas, vouchers, cupons. <b>Fatos:</b> conta corrente, fatura de cartão, vendas, ciclos.',en:'<b>Dimensions:</b> banks, stores, customers, machines, payment methods, failures, vouchers, coupons. <b>Facts:</b> checking account, card statement, sales, cycles.'},
+    atencao:{pt:'A chave de cada transação não depende do nome do banco — por isso, renomear tabelas ou identificadores genéricos não invalida os ajustes manuais já feitos.',en:'Each transaction key does not depend on the bank name — so renaming generic tables or identifiers does not invalidate the manual adjustments already made.'},
+    cat:{ title:{pt:'Como a Gold categoriza uma transação financeira',en:'How Gold categorizes a financial transaction'},
+      steps:{pt:['Normaliza o texto da transação','Gera a chave da transação','Tenta um ajuste manual (se houver)','Tenta uma regra (regex)','Categoria final'],
+             en:['Normalizes the transaction text','Generates the transaction key','Tries a manual override (if any)','Tries a rule (regex)','Final category']} },
+    key:{ title:{pt:'Integração-chave — venda ↔ recebimento',en:'Key integration — sale ↔ receivable'},
+      text:{pt:'Em <code>gold.f_vendas</code>, cada venda da lavanderia é ligada ao recebimento do Banco 2, trazendo vencimento da compensação, status do pagamento, desconto operacional e valor líquido.',en:'In <code>gold.f_vendas</code>, each laundry sale is linked to the Bank 2 receivable, bringing the settlement due date, payment status, operating discount and net amount.'} },
+    m:{contain:{pt:'Dimensões e fatos',en:'Dimensions and facts'}, from:{pt:'Silver + Rules',en:'Silver + Rules'}, load:'rebuild', loadTxt:{pt:'Reconstrução total',en:'Full rebuild'}, consume:{pt:'Power BI / análise',en:'Power BI / analytics'}} },
+];
+
+const UI = {
+  pt:{ eyebrow:'Documentação · Parte 3', title:'Camadas do banco',
+    lead:'Os dados atravessam uma arquitetura em camadas (medallion). Cada camada tem um papel — e não é uma fila reta: a Rules entra pela lateral e a Gold combina Silver + Rules.',
+    stackTitle:'A pilha de camadas', stackSub:'Como os dados fluem de uma camada para a outra.',
+    stackNote:'<b>Repare:</b> a Rules não vem da Silver. Ela é alimentada pela configuração do projeto e entra pela lateral, junto com a Silver, para formar a Gold.',
+    mtxTitle:'Visão geral', mtxSub:'O que muda entre as camadas.',
+    mtxHead:['Camada','O que contém','De onde vem','Como é carregada','Quem consome'],
+    cardsTitle:'Detalhe por camada', cardsSub:'Na ordem em que os dados percorrem.',
+    lblContem:'O que contém', lblIO:'Entrada → saída', lblCarga:'Estratégia de carga', lblElem:'Tabelas / elementos', lblNote:'Ponto de atenção',
+    closeH:'A Gold é o Data Warehouse final',
+    closeP:'A camada Gold é o banco analítico limpo e organizado que fecha o ETL — o mesmo “Data Warehouse” do fim do fluxo. É a partir dela (não da RAW) que o Power BI, entre outras ferramentas, constrói modelo, medidas e visuais.' },
+  en:{ eyebrow:'Documentation · Part 3', title:'Database layers',
+    lead:'The data moves through a layered (medallion) architecture. Each layer has a role — and it is not a straight line: Rules enters from the side and Gold combines Silver + Rules.',
+    stackTitle:'The layer stack', stackSub:'How data flows from one layer to the next.',
+    stackNote:'<b>Note:</b> Rules does not come from Silver. It is fed by the project configuration and enters from the side, together with Silver, to form Gold.',
+    mtxTitle:'Overview', mtxSub:'What changes between the layers.',
+    mtxHead:['Layer','What it holds','Comes from','How it is loaded','Consumed by'],
+    cardsTitle:'Detail by layer', cardsSub:'In the order the data travels.',
+    lblContem:'What it holds', lblIO:'Input → output', lblCarga:'Load strategy', lblElem:'Tables / elements', lblNote:'Watch out',
+    closeH:'Gold is the final Data Warehouse',
+    closeP:'The Gold layer is the clean, organized analytical database that closes the ETL — the same “Data Warehouse” at the end of the flow. It is from Gold (not RAW) that Power BI, among other tools, builds the model, measures and visuals.' },
+};
+
+const PALETTE = {
+  light:{ raw:{color:'#bf7833',bg:'#f6ecdf'}, sil:{color:'#7c899e',bg:'#edf0f4'}, rul:{color:'#178a7c',bg:'#e2f3f0'}, gol:{color:'#b8901c',bg:'#f8efd4'},
+    wire:'#9aa4b4', dash:'#178a7c', cap:'#8a94a4' },
+  dark:{ raw:{color:'#d18f4e',bg:'#2a1f12'}, sil:{color:'#9aa6ba',bg:'#1f2530'}, rul:{color:'#2bb3a1',bg:'#0f2621'}, gol:{color:'#d8ad30',bg:'#2a2411'},
+    wire:'#5f6b7e', dash:'#2bb3a1', cap:'#7a8598' },
+};
+
+function plate(x,y,w,h,cv,name,role,cap,capColor){
+  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="14" fill="${cv.bg}" stroke="${cv.color}" stroke-width="1.5"/>
+    <text x="${x+w/2}" y="${y+h/2-8}" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-weight="700" font-size="21" fill="${cv.color}">${name}</text>
+    <text x="${x+w/2}" y="${y+h/2+12}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10.5" letter-spacing="1" fill="${cv.color}">${role.toUpperCase()}</text>
+    <text x="${x+w/2}" y="${y+h/2+30}" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="${capColor}">${cap}</text>`;
+}
+function stackSVG(L){
+  const g=id=>LAYERS.find(x=>x.id===id);
+  const P=PALETTE[THEME]||PALETTE.light;
+  const cap={ raw:{pt:'5 fontes → raw.*',en:'5 sources → raw.*'}, sil:{pt:'RAW → tabelas tipadas',en:'RAW → typed tables'},
+              rul:{pt:'configuração → regras',en:'configuration → rules'}, gol:{pt:'Silver + Rules → modelo',en:'Silver + Rules → model'} };
+  return `<svg viewBox="0 0 900 290" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="ah" markerWidth="10" markerHeight="10" refX="7" refY="3.4" orient="auto" markerUnits="userSpaceOnUse">
+        <path d="M0,0 L7.5,3.4 L0,6.8 Z" fill="${P.wire}"/></marker>
+    </defs>
+    <path d="M200,116 L246,116" fill="none" stroke="${P.wire}" stroke-width="2.2" marker-end="url(#ah)"/>
+    <path d="M424,108 C545,108 566,96 672,96" fill="none" stroke="${P.wire}" stroke-width="2.2" marker-end="url(#ah)"/>
+    <path d="M550,176 C645,168 660,150 672,150" fill="none" stroke="${P.dash}" stroke-width="2.2" stroke-dasharray="6 5" marker-end="url(#ah)"/>
+    ${plate(24,64,176,104,P.raw,g('raw').name,g('raw').role[L],cap.raw[L],P.cap)}
+    ${plate(248,64,176,104,P.sil,g('silver').name,g('silver').role[L],cap.sil[L],P.cap)}
+    ${plate(462,176,176,96,P.rul,g('rules').name,g('rules').role[L],cap.rul[L],P.cap)}
+    ${plate(676,52,196,128,P.gol,g('gold').name,g('gold').role[L],cap.gol[L],P.cap)}
+  </svg>`;
+}
+
+const DICT = {"raw": [{"table": "bank1", "cols": [{"ord": 1, "col": "id", "type": "bigint", "req": true, "pt": "Identificador sequencial do registro.", "en": "Sequential identifier of the record."}, {"ord": 2, "col": "timestampextraction", "type": "timestamp without time zone", "req": true, "pt": "Data e hora em que o registro foi extraído da fonte.", "en": "Date and time the record was extracted from the source."}, {"ord": 3, "col": "payload", "type": "jsonb", "req": true, "pt": "Conteúdo bruto original da fonte, preservado em JSON.", "en": "Original raw content from the source, preserved as JSON."}, {"ord": 4, "col": "hashid", "type": "character varying(64)", "req": true, "pt": "Hash do conteúdo, usado para evitar gravar o mesmo registro duas vezes.", "en": "Content hash, used to avoid storing the same record twice."}]}, {"table": "bank1_cartao", "cols": [{"ord": 1, "col": "id", "type": "bigint", "req": true, "pt": "Identificador sequencial do registro.", "en": "Sequential identifier of the record."}, {"ord": 2, "col": "timestampextraction", "type": "timestamp without time zone", "req": true, "pt": "Data e hora em que o registro foi extraído da fonte.", "en": "Date and time the record was extracted from the source."}, {"ord": 3, "col": "payload", "type": "jsonb", "req": true, "pt": "Conteúdo bruto original da fonte, preservado em JSON.", "en": "Original raw content from the source, preserved as JSON."}, {"ord": 4, "col": "hashid", "type": "character varying(64)", "req": true, "pt": "Hash do conteúdo, usado para evitar gravar o mesmo registro duas vezes.", "en": "Content hash, used to avoid storing the same record twice."}]}, {"table": "bank2", "cols": [{"ord": 1, "col": "id", "type": "bigint", "req": true, "pt": "Identificador sequencial do registro.", "en": "Sequential identifier of the record."}, {"ord": 2, "col": "timestampextraction", "type": "timestamp without time zone", "req": true, "pt": "Data e hora em que o registro foi extraído da fonte.", "en": "Date and time the record was extracted from the source."}, {"ord": 3, "col": "payload", "type": "jsonb", "req": true, "pt": "Conteúdo bruto original da fonte, preservado em JSON.", "en": "Original raw content from the source, preserved as JSON."}, {"ord": 4, "col": "hashid", "type": "character varying(64)", "req": true, "pt": "Hash do conteúdo, usado para evitar gravar o mesmo registro duas vezes.", "en": "Content hash, used to avoid storing the same record twice."}]}, {"table": "bank3", "cols": [{"ord": 1, "col": "id", "type": "bigint", "req": true, "pt": "Identificador sequencial do registro.", "en": "Sequential identifier of the record."}, {"ord": 2, "col": "timestampextraction", "type": "timestamp without time zone", "req": true, "pt": "Data e hora em que o registro foi extraído da fonte.", "en": "Date and time the record was extracted from the source."}, {"ord": 3, "col": "payload", "type": "jsonb", "req": true, "pt": "Conteúdo bruto original da fonte, preservado em JSON.", "en": "Original raw content from the source, preserved as JSON."}, {"ord": 4, "col": "hashid", "type": "character varying(64)", "req": true, "pt": "Hash do conteúdo, usado para evitar gravar o mesmo registro duas vezes.", "en": "Content hash, used to avoid storing the same record twice."}]}, {"table": "laundry_system", "cols": [{"ord": 1, "col": "id", "type": "bigint", "req": true, "pt": "Identificador sequencial do registro.", "en": "Sequential identifier of the record."}, {"ord": 2, "col": "basename", "type": "character varying(50)", "req": true, "pt": "Nome da entidade de origem dentro do sistema (ex.: vendas, clientes, máquinas).", "en": "Name of the source entity within the system (e.g., sales, customers, machines)."}, {"ord": 3, "col": "timestampextraction", "type": "timestamp without time zone", "req": true, "pt": "Data e hora em que o registro foi extraído da fonte.", "en": "Date and time the record was extracted from the source."}, {"ord": 4, "col": "payload", "type": "jsonb", "req": true, "pt": "Conteúdo bruto original da fonte, preservado em JSON.", "en": "Original raw content from the source, preserved as JSON."}, {"ord": 5, "col": "hashid", "type": "character varying(64)", "req": true, "pt": "Hash do conteúdo, usado para evitar gravar o mesmo registro duas vezes.", "en": "Content hash, used to avoid storing the same record twice."}]}], "silver": [{"table": "bank1", "cols": [{"ord": 1, "col": "ds_banco", "type": "text", "req": false, "pt": "Nome/identificação do banco de origem.", "en": "Name/identification of the source bank."}, {"ord": 2, "col": "datatransacao", "type": "date", "req": false, "pt": "Data da transação.", "en": "Transaction date."}, {"ord": 3, "col": "documento", "type": "text", "req": false, "pt": "Número do documento do lançamento no extrato.", "en": "Document number of the statement entry."}, {"ord": 4, "col": "historico", "type": "text", "req": false, "pt": "Histórico/descrição da movimentação no extrato.", "en": "History/description of the statement entry."}, {"ord": 5, "col": "debito", "type": "double precision", "req": false, "pt": "Valor debitado (saída) na conta.", "en": "Debited amount (outflow) from the account."}, {"ord": 6, "col": "credito", "type": "double precision", "req": false, "pt": "Valor creditado (entrada) na conta.", "en": "Credited amount (inflow) to the account."}, {"ord": 7, "col": "saldo", "type": "double precision", "req": false, "pt": "Saldo da conta após a movimentação.", "en": "Account balance after the entry."}, {"ord": 8, "col": "descricao", "type": "text", "req": false, "pt": "Descrição complementar do lançamento.", "en": "Additional description of the entry."}, {"ord": 9, "col": "datepartition", "type": "timestamp without time zone", "req": false, "pt": "Carimbo de tempo usado para particionar e controlar a carga.", "en": "Timestamp used to partition and control the load."}]}, {"table": "bank1_cartoes", "cols": [{"ord": 1, "col": "ds_banco", "type": "text", "req": false, "pt": "Nome/identificação do banco de origem.", "en": "Name/identification of the source bank."}, {"ord": 2, "col": "data_transacao", "type": "date", "req": false, "pt": "Data da transação.", "en": "Transaction date."}, {"ord": 3, "col": "dt_vencimento_fatura", "type": "date", "req": false, "pt": "Data de vencimento da fatura do cartão.", "en": "Card statement due date."}, {"ord": 4, "col": "portador", "type": "text", "req": false, "pt": "Nome do portador do cartão.", "en": "Cardholder name."}, {"ord": 5, "col": "cartao", "type": "text", "req": false, "pt": "Identificação (mascarada) do cartão.", "en": "Card identifier (masked)."}, {"ord": 6, "col": "descricao", "type": "text", "req": false, "pt": "Descrição da transação.", "en": "Transaction description."}, {"ord": 7, "col": "valores_extraidos", "type": "numeric(12,2)", "req": false, "pt": "Valor da transação extraído da fatura.", "en": "Transaction amount extracted from the statement."}, {"ord": 8, "col": "datepartition", "type": "timestamp without time zone", "req": false, "pt": "Carimbo de tempo usado para particionar e controlar a carga.", "en": "Timestamp used to partition and control the load."}]}, {"table": "bank2", "cols": [{"ord": 1, "col": "documento", "type": "text", "req": false, "pt": "Documento/identificador da venda no adquirente.", "en": "Document/identifier of the sale at the acquirer."}, {"ord": 2, "col": "stonecode", "type": "bigint", "req": false, "pt": "Código do estabelecimento na Stone (StoneCode).", "en": "Merchant code at Stone (StoneCode)."}, {"ord": 3, "col": "categoria", "type": "text", "req": false, "pt": "Categoria da transação/recebimento.", "en": "Category of the transaction/receivable."}, {"ord": 4, "col": "datavenda", "type": "timestamp without time zone", "req": false, "pt": "Data e hora da venda.", "en": "Date and time of the sale."}, {"ord": 5, "col": "datavencimento", "type": "date", "req": false, "pt": "Data de vencimento do recebimento.", "en": "Receivable due date."}, {"ord": 6, "col": "datavencimentooriginal", "type": "date", "req": false, "pt": "Data de vencimento original (antes de antecipação/ajuste).", "en": "Original due date (before anticipation/adjustment)."}, {"ord": 7, "col": "bandeira", "type": "text", "req": false, "pt": "Bandeira do cartão.", "en": "Card brand."}, {"ord": 8, "col": "produto", "type": "text", "req": false, "pt": "Produto/modalidade do pagamento (ex.: crédito, débito).", "en": "Payment product/modality (e.g., credit, debit)."}, {"ord": 9, "col": "stoneid", "type": "double precision", "req": false, "pt": "Identificador da transação na Stone.", "en": "Transaction identifier at Stone."}, {"ord": 10, "col": "qtdparcelas", "type": "integer", "req": false, "pt": "Quantidade total de parcelas.", "en": "Total number of installments."}, {"ord": 11, "col": "noparcela", "type": "integer", "req": false, "pt": "Número da parcela atual.", "en": "Current installment number."}, {"ord": 12, "col": "valorbruto", "type": "double precision", "req": false, "pt": "Valor bruto da transação.", "en": "Gross amount of the transaction."}, {"ord": 13, "col": "valorliquido", "type": "double precision", "req": false, "pt": "Valor líquido recebido (após descontos).", "en": "Net amount received (after fees)."}, {"ord": 14, "col": "descontomdr", "type": "double precision", "req": false, "pt": "Desconto de MDR (taxa da adquirente).", "en": "MDR fee (acquirer discount)."}, {"ord": 15, "col": "descontoantecipacao", "type": "double precision", "req": false, "pt": "Desconto por antecipação de recebíveis.", "en": "Discount for early settlement (anticipation)."}, {"ord": 16, "col": "descontounificado", "type": "double precision", "req": false, "pt": "Desconto total unificado aplicado.", "en": "Total unified discount applied."}, {"ord": 17, "col": "ultimostatus", "type": "text", "req": false, "pt": "Último status conhecido do recebimento.", "en": "Latest known status of the receivable."}, {"ord": 18, "col": "dataultimostatus", "type": "timestamp without time zone", "req": false, "pt": "Data e hora do último status.", "en": "Date and time of the latest status."}, {"ord": 19, "col": "datepartition", "type": "timestamp without time zone", "req": false, "pt": "Carimbo de tempo usado para particionar e controlar a carga.", "en": "Timestamp used to partition and control the load."}]}, {"table": "bank3", "cols": [{"ord": 1, "col": "ds_banco", "type": "text", "req": false, "pt": "Nome/identificação do banco de origem.", "en": "Name/identification of the source bank."}, {"ord": 2, "col": "datatransacao", "type": "date", "req": false, "pt": "Data da transação.", "en": "Transaction date."}, {"ord": 3, "col": "datacontabil", "type": "date", "req": false, "pt": "Data contábil do lançamento.", "en": "Accounting date of the entry."}, {"ord": 4, "col": "titulo", "type": "text", "req": false, "pt": "Título/descrição resumida do lançamento.", "en": "Title/short description of the entry."}, {"ord": 5, "col": "descricao", "type": "text", "req": false, "pt": "Descrição do lançamento no extrato.", "en": "Description of the statement entry."}, {"ord": 6, "col": "entrada", "type": "double precision", "req": false, "pt": "Valor de entrada (crédito) na conta.", "en": "Inflow (credit) amount."}, {"ord": 7, "col": "saida", "type": "double precision", "req": false, "pt": "Valor de saída (débito) na conta.", "en": "Outflow (debit) amount."}, {"ord": 8, "col": "saldo_do_dia", "type": "double precision", "req": false, "pt": "Saldo da conta no dia.", "en": "Account balance for the day."}, {"ord": 9, "col": "datepartition", "type": "timestamp without time zone", "req": false, "pt": "Carimbo de tempo usado para particionar e controlar a carga.", "en": "Timestamp used to partition and control the load."}]}, {"table": "laundry_system_ciclos", "cols": [{"ord": 1, "col": "idlavanderia", "type": "integer", "req": false, "pt": "Identificador da lavanderia (origem).", "en": "Laundry identifier (source)."}, {"ord": 2, "col": "lavanderia", "type": "text", "req": false, "pt": "Nome da lavanderia.", "en": "Laundry name."}, {"ord": 3, "col": "documentoempresa", "type": "text", "req": false, "pt": "Documento (CNPJ) da empresa/lavanderia.", "en": "Company/laundry document (CNPJ)."}, {"ord": 4, "col": "idvenda", "type": "bigint", "req": false, "pt": "Identificador da venda no sistema de gestão.", "en": "Sale identifier in the management system."}, {"ord": 5, "col": "data", "type": "timestamp without time zone", "req": false, "pt": "Data e hora do evento (venda/ciclo).", "en": "Date and time of the event (sale/cycle)."}, {"ord": 6, "col": "status", "type": "text", "req": false, "pt": "Status da venda/ciclo.", "en": "Status of the sale/cycle."}, {"ord": 7, "col": "tipopagamento", "type": "text", "req": false, "pt": "Tipo de pagamento utilizado.", "en": "Payment type used."}, {"ord": 8, "col": "bandeiracartao", "type": "text", "req": false, "pt": "Bandeira do cartão utilizado.", "en": "Card brand used."}, {"ord": 9, "col": "tipocartao", "type": "text", "req": false, "pt": "Tipo de cartão (crédito/débito).", "en": "Card type (credit/debit)."}, {"ord": 10, "col": "codigoautorizacaoemissor", "type": "text", "req": false, "pt": "Código de autorização do emissor do cartão.", "en": "Card issuer authorization code."}, {"ord": 11, "col": "coderro", "type": "text", "req": false, "pt": "Código do erro/falha (quando houver).", "en": "Error/failure code (if any)."}, {"ord": 12, "col": "erro", "type": "text", "req": false, "pt": "Descrição do erro/falha.", "en": "Error/failure description."}, {"ord": 13, "col": "valor", "type": "double precision", "req": false, "pt": "Valor da venda (com desconto).", "en": "Sale amount (after discount)."}, {"ord": 14, "col": "valorsemdesconto", "type": "double precision", "req": false, "pt": "Valor da venda sem desconto.", "en": "Sale amount without discount."}, {"ord": 15, "col": "maquina", "type": "text", "req": false, "pt": "Máquina utilizada no ciclo.", "en": "Machine used in the cycle."}, {"ord": 16, "col": "tiposervico", "type": "text", "req": false, "pt": "Tipo de serviço (ex.: lavar, secar).", "en": "Service type (e.g., wash, dry)."}, {"ord": 17, "col": "servico", "type": "text", "req": false, "pt": "Serviço executado.", "en": "Service performed."}, {"ord": 18, "col": "cpfcliente", "type": "text", "req": false, "pt": "CPF do cliente.", "en": "Customer tax ID (CPF)."}, {"ord": 19, "col": "nomecliente", "type": "text", "req": false, "pt": "Nome do cliente.", "en": "Customer name."}, {"ord": 20, "col": "telefonecliente", "type": "text", "req": false, "pt": "Telefone do cliente.", "en": "Customer phone."}, {"ord": 21, "col": "emailcliente", "type": "text", "req": false, "pt": "E-mail do cliente.", "en": "Customer e-mail."}, {"ord": 22, "col": "datepartition", "type": "timestamp without time zone", "req": false, "pt": "Carimbo de tempo usado para particionar e controlar a carga.", "en": "Timestamp used to partition and control the load."}]}, {"table": "laundry_system_clientes", "cols": [{"ord": 1, "col": "id", "type": "bigint", "req": false, "pt": "Identificador sequencial do registro.", "en": "Sequential identifier of the record."}, {"ord": 2, "col": "cpf", "type": "bigint", "req": false, "pt": "CPF do cliente.", "en": "Customer tax ID (CPF)."}, {"ord": 3, "col": "nome", "type": "text", "req": false, "pt": "Nome do cliente.", "en": "Customer name."}, {"ord": 4, "col": "email", "type": "text", "req": false, "pt": "E-mail do cliente.", "en": "Customer e-mail."}, {"ord": 5, "col": "genero", "type": "text", "req": false, "pt": "Gênero do cliente.", "en": "Customer gender."}, {"ord": 6, "col": "telefone", "type": "text", "req": false, "pt": "Telefone do cliente.", "en": "Customer phone."}, {"ord": 7, "col": "datacadastro", "type": "timestamp without time zone", "req": false, "pt": "Data de cadastro do cliente.", "en": "Customer registration date."}, {"ord": 8, "col": "primeiracompra", "type": "timestamp without time zone", "req": false, "pt": "Data da primeira compra do cliente.", "en": "Date of the customer first purchase."}, {"ord": 9, "col": "ultimacompra", "type": "timestamp without time zone", "req": false, "pt": "Data da última compra do cliente.", "en": "Date of the customer last purchase."}, {"ord": 10, "col": "datanascimento", "type": "timestamp without time zone", "req": false, "pt": "Data de nascimento do cliente.", "en": "Customer date of birth."}, {"ord": 11, "col": "datepartition", "type": "timestamp without time zone", "req": false, "pt": "Carimbo de tempo usado para particionar e controlar a carga.", "en": "Timestamp used to partition and control the load."}]}, {"table": "laundry_system_lavanderias", "cols": [{"ord": 1, "col": "id", "type": "bigint", "req": false, "pt": "Identificador sequencial do registro.", "en": "Sequential identifier of the record."}, {"ord": 2, "col": "nome", "type": "text", "req": false, "pt": "Nome da lavanderia.", "en": "Laundry name."}, {"ord": 3, "col": "empresa", "type": "text", "req": false, "pt": "Nome da empresa proprietária da lavanderia.", "en": "Name of the company that owns the laundry."}, {"ord": 4, "col": "cnpj", "type": "text", "req": false, "pt": "CNPJ da lavanderia/empresa.", "en": "Laundry/company tax ID (CNPJ)."}, {"ord": 5, "col": "endereco", "type": "text", "req": false, "pt": "Endereço da lavanderia.", "en": "Laundry address."}, {"ord": 6, "col": "cidade", "type": "text", "req": false, "pt": "Cidade da lavanderia.", "en": "Laundry city."}, {"ord": 7, "col": "uf", "type": "text", "req": false, "pt": "Unidade federativa (estado) da lavanderia.", "en": "State (UF) of the laundry."}, {"ord": 8, "col": "datepartition", "type": "timestamp without time zone", "req": false, "pt": "Carimbo de tempo usado para particionar e controlar a carga.", "en": "Timestamp used to partition and control the load."}]}, {"table": "laundry_system_maquinas", "cols": [{"ord": 1, "col": "id", "type": "bigint", "req": false, "pt": "Identificador sequencial do registro.", "en": "Sequential identifier of the record."}, {"ord": 2, "col": "idlavanderia", "type": "bigint", "req": false, "pt": "Identificador da lavanderia (origem).", "en": "Laundry identifier (source)."}, {"ord": 3, "col": "nome", "type": "text", "req": false, "pt": "Nome da máquina.", "en": "Machine name."}, {"ord": 4, "col": "tipo", "type": "text", "req": false, "pt": "Tipo da máquina (ex.: lavadora, secadora).", "en": "Machine type (e.g., washer, dryer)."}, {"ord": 5, "col": "datepartition", "type": "timestamp without time zone", "req": false, "pt": "Carimbo de tempo usado para particionar e controlar a carga.", "en": "Timestamp used to partition and control the load."}]}, {"table": "laundry_system_vendas", "cols": [{"ord": 1, "col": "idlavanderia", "type": "integer", "req": false, "pt": "Identificador da lavanderia (origem).", "en": "Laundry identifier (source)."}, {"ord": 2, "col": "lavanderia", "type": "text", "req": false, "pt": "Nome da lavanderia.", "en": "Laundry name."}, {"ord": 3, "col": "documentoempresa", "type": "text", "req": false, "pt": "Documento (CNPJ) da empresa/lavanderia.", "en": "Company/laundry document (CNPJ)."}, {"ord": 4, "col": "idvenda", "type": "bigint", "req": false, "pt": "Identificador da venda no sistema de gestão.", "en": "Sale identifier in the management system."}, {"ord": 5, "col": "data", "type": "timestamp without time zone", "req": false, "pt": "Data e hora do evento (venda/ciclo).", "en": "Date and time of the event (sale/cycle)."}, {"ord": 6, "col": "status", "type": "text", "req": false, "pt": "Status da venda/ciclo.", "en": "Status of the sale/cycle."}, {"ord": 7, "col": "tipopagamento", "type": "text", "req": false, "pt": "Tipo de pagamento utilizado.", "en": "Payment type used."}, {"ord": 8, "col": "codigoautorizacaoemissor", "type": "text", "req": false, "pt": "Código de autorização do emissor do cartão.", "en": "Card issuer authorization code."}, {"ord": 9, "col": "coderro", "type": "text", "req": false, "pt": "Código do erro/falha (quando houver).", "en": "Error/failure code (if any)."}, {"ord": 10, "col": "erro", "type": "text", "req": false, "pt": "Descrição do erro/falha.", "en": "Error/failure description."}, {"ord": 11, "col": "cupom", "type": "text", "req": false, "pt": "Cupom aplicado na venda.", "en": "Coupon applied to the sale."}, {"ord": 12, "col": "voucher", "type": "text", "req": false, "pt": "Voucher aplicado na venda.", "en": "Voucher applied to the sale."}, {"ord": 13, "col": "nomecategoriavoucher", "type": "text", "req": false, "pt": "Nome da categoria do voucher.", "en": "Voucher category name."}, {"ord": 14, "col": "valor", "type": "double precision", "req": false, "pt": "Valor da venda (com desconto).", "en": "Sale amount (after discount)."}, {"ord": 15, "col": "valorsemdesconto", "type": "double precision", "req": false, "pt": "Valor da venda sem desconto.", "en": "Sale amount without discount."}, {"ord": 16, "col": "provedor", "type": "text", "req": false, "pt": "Provedor do pagamento.", "en": "Payment provider."}, {"ord": 17, "col": "adquirente", "type": "text", "req": false, "pt": "Adquirente responsável pela transação.", "en": "Acquirer responsible for the transaction."}, {"ord": 18, "col": "bandeiracartao", "type": "text", "req": false, "pt": "Bandeira do cartão utilizado.", "en": "Card brand used."}, {"ord": 19, "col": "tipocartao", "type": "text", "req": false, "pt": "Tipo de cartão (crédito/débito).", "en": "Card type (credit/debit)."}, {"ord": 20, "col": "requisicao", "type": "text", "req": false, "pt": "Identificador da requisição de pagamento.", "en": "Payment request identifier."}, {"ord": 21, "col": "cpfcliente", "type": "text", "req": false, "pt": "CPF do cliente.", "en": "Customer tax ID (CPF)."}, {"ord": 22, "col": "nomecliente", "type": "text", "req": false, "pt": "Nome do cliente.", "en": "Customer name."}, {"ord": 23, "col": "telefonecliente", "type": "text", "req": false, "pt": "Telefone do cliente.", "en": "Customer phone."}, {"ord": 24, "col": "emailcliente", "type": "text", "req": false, "pt": "E-mail do cliente.", "en": "Customer e-mail."}, {"ord": 25, "col": "datepartition", "type": "timestamp without time zone", "req": false, "pt": "Carimbo de tempo usado para particionar e controlar a carga.", "en": "Timestamp used to partition and control the load."}]}], "rules": [{"table": "ajustes_manuais_transacoes", "cols": [{"ord": 1, "col": "cd_transacao", "type": "text", "req": true, "pt": "Chave única da transação financeira.", "en": "Unique key of the financial transaction."}, {"ord": 2, "col": "texto_busca", "type": "text", "req": false, "pt": "Texto usado para localizar/associar a transação manualmente.", "en": "Text used to locate/associate the transaction manually."}]}, {"table": "padronizacao_categorias_transacoes", "cols": [{"ord": 1, "col": "cd_descricao", "type": "integer", "req": true, "pt": "Código da categoria padronizada.", "en": "Standardized category code."}, {"ord": 2, "col": "descricao", "type": "text", "req": false, "pt": "Nome da categoria padronizada.", "en": "Standardized category name."}, {"ord": 3, "col": "ds_tipodebito", "type": "text", "req": false, "pt": "Tipo de débito associado à categoria.", "en": "Debit type associated with the category."}, {"ord": 4, "col": "fl_fixo", "type": "boolean", "req": false, "pt": "Indica se a categoria é de custo fixo.", "en": "Indicates whether the category is a fixed cost."}, {"ord": 5, "col": "fl_operacional", "type": "boolean", "req": false, "pt": "Indica se é um custo operacional.", "en": "Indicates whether it is an operational cost."}, {"ord": 6, "col": "fl_diluivel", "type": "boolean", "req": false, "pt": "Indica se o custo pode ser diluído.", "en": "Indicates whether the cost can be diluted/spread."}, {"ord": 7, "col": "fl_recorrente", "type": "boolean", "req": false, "pt": "Indica se é um custo recorrente.", "en": "Indicates whether it is a recurring cost."}, {"ord": 8, "col": "fl_custociclo", "type": "boolean", "req": false, "pt": "Indica se o custo é atribuído ao ciclo.", "en": "Indicates whether the cost is attributed to the cycle."}]}, {"table": "regexpadrao_detalhes_transacoes", "cols": [{"ord": 1, "col": "nr_prioridade", "type": "integer", "req": false, "pt": "Prioridade de aplicação da regra (menor = primeiro).", "en": "Rule application priority (lower = first)."}, {"ord": 2, "col": "ds_regex", "type": "text", "req": false, "pt": "Expressão regular usada para casar a descrição da transação.", "en": "Regular expression used to match the transaction description."}, {"ord": 3, "col": "ds_categoria", "type": "text", "req": false, "pt": "Categoria atribuída quando a regra casa.", "en": "Category assigned when the rule matches."}]}], "gold": [{"table": "d_bancos", "cols": [{"ord": 1, "col": "cd_banco", "type": "integer", "req": true, "pt": "Código do banco.", "en": "Bank code."}, {"ord": 2, "col": "ds_banco", "type": "text", "req": true, "pt": "Nome/identificação do banco de origem.", "en": "Name/identification of the source bank."}]}, {"table": "d_clientes", "cols": [{"ord": 1, "col": "nr_cpfcliente", "type": "bigint", "req": true, "pt": "CPF do cliente (chave).", "en": "Customer tax ID / CPF (key)."}, {"ord": 2, "col": "ds_nome", "type": "text", "req": false, "pt": "Nome do cliente.", "en": "Customer name."}, {"ord": 3, "col": "ds_email", "type": "text", "req": false, "pt": "E-mail do cliente.", "en": "Customer e-mail."}, {"ord": 4, "col": "ds_genero", "type": "text", "req": false, "pt": "Gênero do cliente.", "en": "Customer gender."}, {"ord": 5, "col": "ds_telefone", "type": "text", "req": false, "pt": "Telefone do cliente.", "en": "Customer phone."}, {"ord": 6, "col": "dt_nascimento", "type": "date", "req": false, "pt": "Data de nascimento do cliente.", "en": "Customer date of birth."}, {"ord": 7, "col": "dt_cadastro", "type": "date", "req": false, "pt": "Data de cadastro do cliente.", "en": "Customer registration date."}, {"ord": 8, "col": "datepartition", "type": "timestamp without time zone", "req": false, "pt": "Carimbo de tempo usado para particionar e controlar a carga.", "en": "Timestamp used to partition and control the load."}]}, {"table": "d_cupom", "cols": [{"ord": 1, "col": "cd_cupom", "type": "integer", "req": true, "pt": "Código do cupom.", "en": "Coupon code."}, {"ord": 2, "col": "ds_cupom", "type": "text", "req": false, "pt": "Descrição do cupom.", "en": "Coupon description."}]}, {"table": "d_falhas", "cols": [{"ord": 1, "col": "cd_erro", "type": "integer", "req": true, "pt": "Código da falha/erro.", "en": "Failure/error code."}, {"ord": 2, "col": "cd_erroapi", "type": "integer", "req": false, "pt": "Código do erro retornado pela API de origem.", "en": "Error code returned by the source API."}, {"ord": 3, "col": "ds_erro", "type": "text", "req": false, "pt": "Descrição da falha/erro.", "en": "Failure/error description."}]}, {"table": "d_lavanderias", "cols": [{"ord": 1, "col": "cd_lavanderia", "type": "bigint", "req": true, "pt": "Código da lavanderia.", "en": "Laundry code."}, {"ord": 2, "col": "ds_lavanderia", "type": "text", "req": false, "pt": "Nome da lavanderia.", "en": "Laundry name."}, {"ord": 3, "col": "cd_cnpj", "type": "text", "req": false, "pt": "CNPJ da lavanderia.", "en": "Laundry tax ID (CNPJ)."}]}, {"table": "d_maquinas", "cols": [{"ord": 1, "col": "cd_maquina", "type": "bigint", "req": true, "pt": "Código da máquina.", "en": "Machine code."}, {"ord": 2, "col": "cd_lavanderia", "type": "bigint", "req": false, "pt": "Código da lavanderia.", "en": "Laundry code."}, {"ord": 3, "col": "ds_maquina", "type": "text", "req": false, "pt": "Nome/identificação da máquina.", "en": "Machine name/identification."}, {"ord": 4, "col": "ds_servico", "type": "text", "req": false, "pt": "Serviço oferecido pela máquina.", "en": "Service offered by the machine."}]}, {"table": "d_metodopagamento", "cols": [{"ord": 1, "col": "cd_modalidadepagamento", "type": "integer", "req": false, "pt": "Código da modalidade de pagamento.", "en": "Payment method code."}, {"ord": 2, "col": "ds_tipo", "type": "text", "req": false, "pt": "Tipo do método de pagamento.", "en": "Payment method type."}, {"ord": 3, "col": "ds_bandeiracartao", "type": "text", "req": false, "pt": "Bandeira do cartão.", "en": "Card brand."}, {"ord": 4, "col": "ds_tipopagamento", "type": "text", "req": false, "pt": "Descrição do tipo de pagamento.", "en": "Payment type description."}]}, {"table": "d_voucher", "cols": [{"ord": 1, "col": "cd_voucher", "type": "text", "req": true, "pt": "Código do voucher.", "en": "Voucher code."}, {"ord": 2, "col": "ds_nome", "type": "text", "req": false, "pt": "Nome do voucher.", "en": "Voucher name."}]}, {"table": "f_ciclos", "cols": [{"ord": 1, "col": "dh_ciclo", "type": "timestamp without time zone", "req": false, "pt": "Data e hora do ciclo.", "en": "Cycle date and time."}, {"ord": 2, "col": "cd_venda", "type": "bigint", "req": false, "pt": "Código da venda.", "en": "Sale code."}, {"ord": 3, "col": "cd_lavanderia", "type": "integer", "req": false, "pt": "Código da lavanderia.", "en": "Laundry code."}, {"ord": 4, "col": "cd_maquina", "type": "integer", "req": false, "pt": "Código da máquina.", "en": "Machine code."}, {"ord": 5, "col": "fl_status", "type": "boolean", "req": false, "pt": "Indicador de status (concluído/sucesso).", "en": "Status indicator (completed/success)."}, {"ord": 6, "col": "cd_erro", "type": "integer", "req": false, "pt": "Código da falha/erro.", "en": "Failure/error code."}, {"ord": 7, "col": "cd_modalidadepagamento", "type": "integer", "req": false, "pt": "Código da modalidade de pagamento.", "en": "Payment method code."}, {"ord": 8, "col": "nr_cpfcliente", "type": "bigint", "req": false, "pt": "CPF do cliente (chave).", "en": "Customer tax ID / CPF (key)."}]}, {"table": "f_contacorrente", "cols": [{"ord": 1, "col": "cd_transacao", "type": "text", "req": true, "pt": "Chave única da transação financeira.", "en": "Unique key of the financial transaction."}, {"ord": 2, "col": "cd_banco", "type": "integer", "req": true, "pt": "Código do banco.", "en": "Bank code."}, {"ord": 3, "col": "dt_transacao", "type": "date", "req": true, "pt": "Data da transação.", "en": "Transaction date."}, {"ord": 4, "col": "fl_debito", "type": "boolean", "req": false, "pt": "Indica se a transação é um débito.", "en": "Indicates whether the transaction is a debit."}, {"ord": 5, "col": "cd_detalhetransacao", "type": "integer", "req": false, "pt": "Código da categoria/detalhe da transação.", "en": "Transaction category/detail code."}, {"ord": 6, "col": "vl_transacao", "type": "numeric(14,2)", "req": false, "pt": "Valor da transação.", "en": "Transaction amount."}]}, {"table": "f_faturacartao", "cols": [{"ord": 1, "col": "cd_transacao", "type": "text", "req": true, "pt": "Chave única da transação financeira.", "en": "Unique key of the financial transaction."}, {"ord": 2, "col": "cd_banco", "type": "integer", "req": true, "pt": "Código do banco.", "en": "Bank code."}, {"ord": 3, "col": "ds_portador", "type": "text", "req": true, "pt": "Nome do portador do cartão.", "en": "Cardholder name."}, {"ord": 4, "col": "nr_cartao", "type": "integer", "req": false, "pt": "Número (final) do cartão.", "en": "Card number (last digits)."}, {"ord": 5, "col": "dt_transacao", "type": "date", "req": true, "pt": "Data da transação.", "en": "Transaction date."}, {"ord": 6, "col": "dt_fatura", "type": "date", "req": true, "pt": "Data de vencimento da fatura.", "en": "Statement due date."}, {"ord": 7, "col": "fl_parcelado", "type": "boolean", "req": false, "pt": "Indica se a compra é parcelada.", "en": "Indicates whether the purchase is in installments."}, {"ord": 8, "col": "nr_parcela", "type": "integer", "req": false, "pt": "Número da parcela.", "en": "Installment number."}, {"ord": 9, "col": "nr_totalparcelas", "type": "integer", "req": false, "pt": "Total de parcelas.", "en": "Total number of installments."}, {"ord": 10, "col": "fl_debito", "type": "boolean", "req": false, "pt": "Indica se a transação é um débito.", "en": "Indicates whether the transaction is a debit."}, {"ord": 11, "col": "cd_detalhetransacao", "type": "integer", "req": false, "pt": "Código da categoria/detalhe da transação.", "en": "Transaction category/detail code."}, {"ord": 12, "col": "vl_transacao", "type": "double precision", "req": false, "pt": "Valor da transação.", "en": "Transaction amount."}]}, {"table": "f_vendas", "cols": [{"ord": 1, "col": "dh_venda", "type": "timestamp without time zone", "req": false, "pt": "Data e hora da venda.", "en": "Sale date and time."}, {"ord": 2, "col": "dt_compensacaopagamento", "type": "date", "req": false, "pt": "Data de compensação do pagamento.", "en": "Payment settlement date."}, {"ord": 3, "col": "ds_statuspagamento", "type": "text", "req": false, "pt": "Status do pagamento.", "en": "Payment status."}, {"ord": 4, "col": "cd_venda", "type": "bigint", "req": false, "pt": "Código da venda.", "en": "Sale code."}, {"ord": 5, "col": "cd_lavanderia", "type": "integer", "req": false, "pt": "Código da lavanderia.", "en": "Laundry code."}, {"ord": 6, "col": "fl_status", "type": "boolean", "req": false, "pt": "Indicador de status (concluído/sucesso).", "en": "Status indicator (completed/success)."}, {"ord": 7, "col": "nr_cpfcliente", "type": "bigint", "req": false, "pt": "CPF do cliente (chave).", "en": "Customer tax ID / CPF (key)."}, {"ord": 8, "col": "cd_modalidadepagamento", "type": "integer", "req": false, "pt": "Código da modalidade de pagamento.", "en": "Payment method code."}, {"ord": 9, "col": "cd_erro", "type": "integer", "req": false, "pt": "Código da falha/erro.", "en": "Failure/error code."}, {"ord": 10, "col": "cd_cupom", "type": "integer", "req": false, "pt": "Código do cupom.", "en": "Coupon code."}, {"ord": 11, "col": "cd_voucher", "type": "text", "req": false, "pt": "Código do voucher.", "en": "Voucher code."}, {"ord": 12, "col": "vl_bruto", "type": "double precision", "req": false, "pt": "Valor bruto da venda.", "en": "Gross sale amount."}, {"ord": 13, "col": "vl_custooperacional", "type": "double precision", "req": false, "pt": "Custo operacional da venda.", "en": "Operating cost of the sale."}, {"ord": 14, "col": "vl_brutosemdesconto", "type": "double precision", "req": false, "pt": "Valor bruto sem desconto.", "en": "Gross amount before discount."}, {"ord": 15, "col": "vl_liquido", "type": "double precision", "req": false, "pt": "Valor líquido da venda.", "en": "Net sale amount."}, {"ord": 16, "col": "dt_partition", "type": "timestamp without time zone", "req": false, "pt": "Carimbo de tempo usado para particionar e controlar a carga.", "en": "Timestamp used to partition and control the load."}]}]};
+const DICT_META = {
+  raw:   {name:'RAW',    color:'var(--raw)'},
+  silver:{name:'Silver', color:'var(--silver)'},
+  rules: {name:'Rules',  color:'var(--rules)'},
+  gold:  {name:'Gold',   color:'var(--gold)'},
+};
+const DICT_UI = {
+  pt:{ title:'Dicionário de dados',
+       sub:'Tabelas e colunas de cada camada. Clique em uma tabela para ver os campos. Os comentários são um rascunho inicial (preenchidos automaticamente) para revisão campo a campo.',
+       th:['Ordem','Coluna','Tipo','Obrig.','Comentário'],
+       req:'obrigatório', opt:'opcional',
+       tbl:n=>n===1?'tabela':'tabelas', colc:n=>n===1?'coluna':'colunas' },
+  en:{ title:'Data dictionary',
+       sub:'Tables and columns of each layer. Click a table to see its fields. Comments are an initial (auto-filled) draft for field-by-field review.',
+       th:['Order','Column','Type','Req.','Comment'],
+       req:'required', opt:'optional',
+       tbl:n=>n===1?'table':'tables', colc:n=>n===1?'column':'columns' },
+};
+function renderDict(){
+  const t=DICT_UI[LANG];
+  document.getElementById('l_dictTitle').textContent=t.title;
+  document.getElementById('l_dictSub').textContent=t.sub;
+  let html='';
+  ['raw','silver','rules','gold'].forEach(function(layer){
+    const meta=DICT_META[layer], tables=DICT[layer]||[];
+    html+='<div class="dict-group" style="--lc:'+meta.color+'">'
+      +'<div class="dict-band"><span class="dict-dot"></span><span class="dict-name">'+meta.name+'</span>'
+      +'<span class="dict-count">'+tables.length+' '+t.tbl(tables.length)+'</span><span class="dict-rule"></span></div>';
+    tables.forEach(function(tb){
+      const n=tb.cols.length;
+      html+='<details class="dtable"><summary><span class="dt-name">'+layer+'.'+tb.table+'</span>'
+        +'<span class="dt-cols">'+n+' '+t.colc(n)+'</span></summary>'
+        +'<div class="dtable-scroll"><table class="dcol"><thead><tr>'
+        + t.th.map(function(h){return '<th>'+h+'</th>';}).join('')
+        +'</tr></thead><tbody>';
+      tb.cols.forEach(function(c){
+        const req = c.req ? '<span class="req y">'+t.req+'</span>' : '<span class="req n">'+t.opt+'</span>';
+        html+='<tr><td class="c-ord">'+c.ord+'</td><td class="c-col">'+c.col+'</td>'
+          +'<td class="c-type">'+c.type+'</td><td>'+req+'</td><td>'+(LANG==='en'?c.en:c.pt)+'</td></tr>';
+      });
+      html+='</tbody></table></div></details>';
+    });
+    html+='</div>';
+  });
+  document.getElementById('l_dictWrap').innerHTML=html;
+}
+const $=id=>document.getElementById('l_'+id);
+
+function render(){
+  const u=UI[LANG];
+  $('uiEyebrow').textContent=u.eyebrow; $('uiTitle').textContent=u.title; $('uiLead').textContent=u.lead;
+
+  $('stackTitle').textContent=u.stackTitle; $('stackSub').textContent=u.stackSub;
+  $('stackSvg').innerHTML=stackSVG(LANG);
+  $('stackNote').innerHTML=u.stackNote;
+
+  $('mtxTitle').textContent=u.mtxTitle; $('mtxSub').textContent=u.mtxSub;
+  $('cardsTitle').textContent=u.cardsTitle; $('cardsSub').textContent=u.cardsSub;
+  $('closeH').textContent=u.closeH; $('closeP').textContent=u.closeP;
+  renderDict();
+
+  $('mtxHead').innerHTML=u.mtxHead.map(h=>`<th>${h}</th>`).join('');
+  $('mtxBody').innerHTML=LAYERS.map(l=>`
+    <tr>
+      <td><div class="lay-cell" style="--lc:${l.color}"><div class="nm">${l.name}</div><div class="rl">${l.role[LANG]}</div></div></td>
+      <td>${l.m.contain[LANG]}</td>
+      <td>${l.m.from[LANG]}</td>
+      <td><span class="pill ${l.m.load}">${l.m.loadTxt[LANG]}</span></td>
+      <td>${l.m.consume[LANG]}</td>
+    </tr>`).join('');
+
+  $('layWrap').innerHTML=LAYERS.map(l=>{
+    let extra='';
+    if(l.isGold){
+      const steps=l.cat.steps[LANG].map((s,i)=>{
+        const last=i===l.cat.steps[LANG].length-1;
+        return `<div class="cstep ${last?'final':''}"><div class="n">${String(i+1).padStart(2,'0')}</div><div class="t">${s}</div></div>`
+             + (last?'':'<span class="carr">→</span>');
+      }).join('');
+      extra=`<div class="gold-extra">
+        <div class="block"><h5>${l.cat.title[LANG]}</h5><div class="catflow">${steps}</div>
+          <div class="keyint"><div class="kh"><span class="star">★</span>${l.key.title[LANG]}</div><p>${l.key.text[LANG]}</p></div>
+        </div></div>`;
+    }
+    return `<div class="lay" style="--lc:${l.color};--lcbg:${l.bg}">
+      <div class="lay-head">
+        <span class="lay-name">${l.name}</span>
+        <span class="role-chip">${l.role[LANG]}</span>
+        <span class="lay-roleline">${l.roleLine[LANG]}</span>
+      </div>
+      <div class="lay-body">
+        <div class="fgrid">
+          <div class="fld"><h5>${u.lblContem}</h5><p>${l.contem[LANG]}</p></div>
+          <div class="fld"><h5>${u.lblIO}</h5><p>${l.io[LANG]}</p></div>
+          <div class="fld"><h5>${u.lblCarga}</h5><p>${l.carga[LANG]}</p></div>
+          <div class="fld"><h5>${u.lblElem}</h5><p>${l.elementos[LANG]}</p></div>
+        </div>
+      </div>
+      ${extra}
+      <div class="lay-note"><b>${u.lblNote}</b>${l.atencao[LANG]}</div>
+    </div>`;
+  }).join('');
+}
+
+render();
+window.__views.layers = { setLang:function(l){ render(); }, setTheme:function(t){ render(); } };
+})();
+
+/* ===================== CONTROLADOR GLOBAL ===================== */
+(function(){
+const TABS = { pt:['Fluxo do processo','Fontes de dados','Camadas do banco'],
+               en:['Process flow','Data sources','Database layers'] };
+const SUB  = { pt:'Documentação do processo', en:'Process documentation' };
+const HINT = { pt:'<b>Clique em uma etapa</b> para ver os detalhes · arraste para mover · role para zoom',
+               en:'<b>Click a step</b> to see details · drag to move · scroll to zoom' };
+
+const hintEl = document.getElementById('uiHint');
+const subEl  = document.getElementById('uiSub');
+
+function store(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function load(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+
+function applyLangGlobal(){
+  document.body.classList.toggle('en', LANG==='en');
+  document.documentElement.lang = LANG==='en' ? 'en' : 'pt-BR';
+  subEl.textContent = SUB[LANG];
+  document.querySelectorAll('#uiTabs .tab span').forEach((s,i)=>s.textContent=TABS[LANG][i]);
+  hintEl.innerHTML = HINT[LANG];
+  document.querySelectorAll('.flag').forEach(b=>b.classList.toggle('active', b.dataset.lang===LANG));
+  for(const k in window.__views){ if(window.__views[k].setLang) window.__views[k].setLang(LANG); }
+}
+function setLang(l){ if(l===LANG)return; LANG=l; store('etl_lang',l); applyLangGlobal(); }
+
+function applyTheme(){
+  document.body.classList.toggle('dark', THEME==='dark');
+  for(const k in window.__views){ if(window.__views[k].setTheme) window.__views[k].setTheme(THEME); }
+}
+function setTheme(t){ THEME=t; store('etl_theme',t); applyTheme(); }
+
+function switchView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active', v.dataset.view===name));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.view===name));
+  document.body.classList.toggle('flow', name==='flow');
+  hintEl.style.display = name==='flow' ? '' : 'none';
+  window.scrollTo(0,0);
+  if(name==='flow' && window.__views.flow && window.__views.flow.onShow) window.__views.flow.onShow();
+}
+
+/* wiring */
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>switchView(t.dataset.view)));
+document.querySelectorAll('.flag').forEach(b=>b.addEventListener('click',()=>setLang(b.dataset.lang)));
+document.getElementById('themeBtn').addEventListener('click',()=>setTheme(THEME==='dark'?'light':'dark'));
+
+/* estado inicial */
+const savedLang = load('etl_lang');
+if(savedLang==='pt'||savedLang==='en') LANG=savedLang;
+const savedTheme = load('etl_theme');
+if(savedTheme==='light'||savedTheme==='dark'){ THEME=savedTheme; }
+else if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){ THEME='dark'; }
+
+applyTheme();
+applyLangGlobal();
+switchView('flow');
+})();
+</script>
+</body>
+</html>
