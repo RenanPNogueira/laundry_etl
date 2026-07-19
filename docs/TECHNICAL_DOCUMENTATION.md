@@ -1,4 +1,8 @@
-# ETL da Lavanderia — Guia Operacional
+# Lav & Sec Express ETL — Documentação técnica
+
+Este documento concentra a referência técnica e operacional do projeto: pré-requisitos, configuração, execução, pipelines, arquitetura de dados e tratamento de falhas.
+
+Para uma apresentação resumida, consulte o [overview do projeto](README.md). Para a representação visual, consulte o [fluxo do processo](PROCESS_FLOW.html).
 
 ## Sumário
 

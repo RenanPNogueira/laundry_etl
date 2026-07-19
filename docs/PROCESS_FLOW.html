@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ETL · Lav &amp; Sec Express</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --canvas:#f3f4f7; --dot:#dde1e9;
+    --ink:#242b37; --muted:#697384;
+    --card:#ffffff; --card-bd:#e3e7ee; --card-sh:0 4px 16px rgba(28,39,60,.07);
+    --wire:#9aa4b4; --wire-lbl:#4b5568;
+    --proc-ac:#586579;
+    --start:#0e9f6e; --start-bg:#e6f6ef;
+    --end:#bd8410; --end-bg:#fbf1d8;
+    --dec-bd:#dda224; --dec-fill:#fff8e6; --dec-ink:#8a5900;
+    --act-bd:#2f6fed; --act-bg:#eaf1fe; --act-ink:#1c47a0;
+    --mode-bd:#7c53e0; --mode-bg:#f2ecfd; --mode-ink:#5a34ad;
+    --stop-bd:#df4438; --stop-bg:#fdeae7; --stop-ink:#a1281e;
+    --disp:'Space Grotesk',system-ui,sans-serif;
+    --body:'Inter',system-ui,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;font-family:var(--body);color:var(--ink);background:#eef0f4;overflow:hidden}
+
+  .bar{height:60px;display:flex;align-items:center;gap:16px;padding:0 20px;
+    background:#fff;border-bottom:1px solid var(--card-bd);position:relative;z-index:40}
+  .brand{display:flex;flex-direction:column;line-height:1.15;flex:none}
+  .brand .t{font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:-.01em}
+  .brand .s{font-size:11.5px;color:var(--muted)}
+  .tabs{display:flex;gap:4px;margin-left:6px}
+  .tab{font-size:13px;font-weight:500;color:var(--muted);padding:8px 13px;border-radius:9px;
+    background:transparent;border:1px solid transparent;cursor:default;white-space:nowrap}
+  .tab.active{color:var(--ink);background:var(--canvas);border-color:var(--card-bd);font-weight:600}
+  .tab.soon{opacity:.55}
+  .tab.soon::after{content:"em breve";font-size:9.5px;margin-left:7px;background:#eef0f4;color:var(--muted);
+    padding:2px 6px;border-radius:6px;vertical-align:middle;letter-spacing:.02em}
+  body.en .tab.soon::after{content:"soon"}
+  .bar .spacer{flex:1}
+  .hint{font-size:12px;color:var(--muted);white-space:nowrap}
+  .hint b{color:var(--ink);font-weight:600}
+  @media (max-width:1080px){ .hint{display:none} }
+  @media (max-width:920px){ .tabs .soon{display:none} .brand .s{display:none} }
+
+  .langsw{display:flex;gap:6px;flex:none}
+  .flag{width:32px;height:23px;padding:0;border:1px solid var(--card-bd);border-radius:6px;overflow:hidden;
+    cursor:pointer;background:#fff;opacity:.42;transition:opacity .15s, box-shadow .15s, transform .1s}
+  .flag:hover{opacity:.8}
+  .flag.active{opacity:1;box-shadow:0 0 0 2px rgba(47,111,237,.35)}
+  .flag:active{transform:scale(.94)}
+  .flag svg{display:block;width:100%;height:100%}
+
+  #canvas{position:absolute;inset:60px 0 0 0;overflow:hidden;cursor:grab;
+    background-color:var(--canvas);
+    background-image:radial-gradient(var(--dot) 1.4px, transparent 1.4px);
+    background-size:26px 26px}
+  #canvas.grabbing{cursor:grabbing}
+  #world{position:absolute;top:0;left:0;transform-origin:0 0}
+  #wires{position:absolute;top:0;left:0;overflow:visible;pointer-events:none}
+  .wpath{fill:none;stroke:var(--wire);stroke-width:2.2;stroke-linecap:round}
+  .wpath.stop{stroke:var(--stop-bd);stroke-dasharray:6 6}
+
+  .node{position:absolute;user-select:none;cursor:pointer;
+    display:flex;flex-direction:column;justify-content:center;
+    box-shadow:var(--card-sh);transition:transform .16s ease, box-shadow .16s ease}
+  .node:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(28,39,60,.15);z-index:6}
+  .node.active{box-shadow:0 0 0 3px rgba(47,111,237,.35), 0 10px 26px rgba(28,39,60,.16)}
+  .node .ttl{font-family:var(--disp);font-weight:600;font-size:14.5px;line-height:1.22}
+  .node .sub{font-size:11.8px;color:var(--muted);margin-top:5px;line-height:1.35}
+
+  .n-proc{background:var(--card);border:1px solid var(--card-bd);border-left:4px solid var(--proc-ac);
+    border-radius:12px;padding:14px 16px}
+  .n-term{border-radius:999px;padding:0 22px;align-items:center;text-align:center}
+  .n-term .ttl{font-family:var(--disp);font-weight:700;font-size:15px}
+  .n-start{background:var(--start-bg);border:1.5px solid var(--start)} .n-start .ttl{color:var(--start)}
+  .n-end{background:var(--end-bg);border:1.5px solid var(--end)} .n-end .ttl{color:var(--end);font-size:14px}
+  .n-act{border-radius:12px;padding:13px 16px;background:var(--act-bg);border:1px solid var(--act-bd)}
+  .n-act .ttl{color:var(--act-ink)}
+  .n-mode{border-radius:12px;padding:13px 16px;background:var(--mode-bg);border:1px solid var(--mode-bd)}
+  .n-mode .ttl{color:var(--mode-ink)}
+  .n-stop{border-radius:12px;padding:13px 16px;background:var(--stop-bg);border:1px solid var(--stop-bd)}
+  .n-stop .ttl{color:var(--stop-ink)} .n-stop .sub{color:#b05149}
+
+  .node .plus{position:absolute;top:-9px;right:-9px;width:20px;height:20px;border-radius:50%;
+    background:#fff;border:1px solid var(--card-bd);color:var(--muted);font-size:13px;line-height:18px;
+    text-align:center;box-shadow:0 2px 5px rgba(28,39,60,.12);opacity:0;transition:opacity .16s}
+  .node:hover .plus,.node.active .plus{opacity:1}
+
+  .n-dec{background:var(--dec-bd);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);box-shadow:none;padding:0}
+  .n-dec .inner{position:absolute;inset:2px;background:var(--dec-fill);
+    clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);
+    display:flex;align-items:center;justify-content:center;text-align:center;padding:0 46px}
+  .n-dec .ttl{font-size:13.5px;color:var(--dec-ink)}
+  .n-dec .eye{position:absolute;top:16px;left:50%;transform:translateX(-50%);
+    font-size:9px;letter-spacing:.16em;color:var(--dec-bd);font-weight:700;text-transform:uppercase}
+  .n-dec.active .inner{background:#fff3cf}
+  .n-dec .diamark{position:absolute;bottom:15px;left:50%;transform:translateX(-50%);
+    font-size:12px;color:var(--dec-bd);opacity:0;transition:opacity .16s}
+  .n-dec:hover .diamark,.n-dec.active .diamark{opacity:1}
+
+  .elbl{position:absolute;transform:translate(-50%,-50%);background:#fff;border:1px solid var(--card-bd);
+    color:var(--wire-lbl);font-size:11px;font-weight:600;padding:2px 9px;border-radius:999px;
+    box-shadow:0 1px 3px rgba(28,39,60,.08);white-space:nowrap;pointer-events:none}
+  .elbl.yes{color:#0e7a53;border-color:#bfe6d5}
+  .elbl.no{color:#b23a2f;border-color:#f3cdc8}
+
+  .node{opacity:0;animation:pop .5s cubic-bezier(.2,.7,.3,1) forwards}
+  @keyframes pop{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+  #wires .wpath{opacity:0;animation:fade .6s ease forwards}
+  .elbl{opacity:0;animation:fade .5s ease forwards}
+  @keyframes fade{to{opacity:1}}
+
+  .controls{position:absolute;right:20px;bottom:20px;z-index:30;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+  .zoombox{display:flex;align-items:center;background:#fff;border:1px solid var(--card-bd);border-radius:12px;
+    box-shadow:var(--card-sh);overflow:hidden}
+  .zoombox button{border:none;background:#fff;width:38px;height:38px;font-size:18px;cursor:pointer;color:var(--ink)}
+  .zoombox button:hover{background:var(--canvas)}
+  .zoombox .pct{width:52px;text-align:center;font-size:12px;color:var(--muted);
+    border-left:1px solid var(--card-bd);border-right:1px solid var(--card-bd);height:38px;line-height:38px}
+  .fitbtn{background:#fff;border:1px solid var(--card-bd);border-radius:10px;padding:9px 14px;font-size:12.5px;
+    font-weight:600;color:var(--ink);cursor:pointer;box-shadow:var(--card-sh)}
+  .fitbtn:hover{background:var(--canvas)}
+
+  .legend{position:absolute;left:20px;bottom:20px;z-index:30;background:#fff;border:1px solid var(--card-bd);
+    border-radius:12px;box-shadow:var(--card-sh);padding:12px 14px;display:flex;flex-direction:column;gap:7px}
+  .legend .row{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted)}
+  .legend .sw{width:13px;height:13px;border-radius:4px;flex:none;border:1px solid rgba(0,0,0,.06)}
+  .legend .sw.dia{border-radius:2px;transform:rotate(45deg);width:11px;height:11px}
+  @media (max-width:760px){ .legend{display:none} }
+
+  #drawer{position:absolute;top:60px;right:0;bottom:0;width:400px;max-width:88vw;background:#fff;
+    border-left:1px solid var(--card-bd);box-shadow:-14px 0 40px rgba(28,39,60,.12);z-index:35;
+    transform:translateX(102%);transition:transform .32s cubic-bezier(.2,.7,.3,1);
+    display:flex;flex-direction:column}
+  #drawer.open{transform:none}
+  .dw-head{padding:22px 24px 16px;border-bottom:1px solid var(--card-bd);position:relative}
+  .dw-badge{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    padding:4px 10px;border-radius:999px;margin-bottom:12px}
+  .dw-title{font-family:var(--disp);font-weight:700;font-size:20px;line-height:1.2;margin:0;padding-right:34px}
+  .dw-close{position:absolute;top:18px;right:18px;width:32px;height:32px;border-radius:9px;border:1px solid var(--card-bd);
+    background:#fff;cursor:pointer;font-size:17px;color:var(--muted);line-height:30px}
+  .dw-close:hover{background:var(--canvas);color:var(--ink)}
+  .dw-body{padding:20px 24px 40px;overflow-y:auto}
+  .dw-lead{font-size:14px;color:var(--ink);line-height:1.55;margin:0 0 18px}
+  .dw-sec{margin-bottom:18px}
+  .dw-sec h4{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.02em;color:var(--muted);
+    text-transform:uppercase;margin:0 0 9px}
+  .dw-sec ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}
+  .dw-sec li{font-size:13.3px;line-height:1.45;padding-left:16px;position:relative;color:#3a4353}
+  .dw-sec li::before{content:"";position:absolute;left:0;top:8px;width:6px;height:6px;border-radius:2px;background:var(--proc-ac)}
+  .dw-sec li b{color:var(--ink);font-weight:600}
+  .dw-sec code{font-family:var(--mono);font-size:11.6px;background:#f1f3f7;border:1px solid #e4e8ee;
+    border-radius:5px;padding:1px 6px;color:#334}
+  .dw-note{font-size:12.5px;line-height:1.45;background:var(--stop-bg);border:1px solid #f3cdc8;color:#8f342b;
+    border-radius:10px;padding:11px 13px;margin-top:4px}
+  .dw-note b{color:#7a2820}
+
+  @media (prefers-reduced-motion:reduce){
+    .node,.elbl,#wires .wpath{animation:none;opacity:1}
+    .node{transform:none}
+    #drawer{transition:none}
+  }
+</style>
+</head>
+<body>
+
+  <div class="bar">
+    <div class="brand">
+      <span class="t">ETL · Lav &amp; Sec Express</span>
+      <span class="s" id="uiSub">Documentação do processo</span>
+    </div>
+    <div class="tabs" id="uiTabs">
+      <div class="tab active"><span></span></div>
+      <div class="tab soon"><span></span></div>
+      <div class="tab soon"><span></span></div>
+      <div class="tab soon"><span></span></div>
+    </div>
+    <div class="spacer"></div>
+    <div class="hint" id="uiHint"></div>
+    <div class="langsw">
+      <button class="flag active" data-lang="pt" title="Português (Brasil)">
+        <svg viewBox="0 0 32 23"><rect width="32" height="23" fill="#009c3b"/><path d="M16 3 L29 11.5 L16 20 L3 11.5 Z" fill="#ffdf00"/><circle cx="16" cy="11.5" r="4.8" fill="#002776"/></svg>
+      </button>
+      <button class="flag" data-lang="en" title="English">
+        <svg viewBox="0 0 32 23">
+          <rect width="32" height="23" fill="#b22234"/>
+          <g fill="#fff"><rect y="1.77" width="32" height="1.77"/><rect y="5.31" width="32" height="1.77"/><rect y="8.85" width="32" height="1.77"/><rect y="12.38" width="32" height="1.77"/><rect y="15.92" width="32" height="1.77"/><rect y="19.46" width="32" height="1.77"/></g>
+          <rect width="14" height="12.38" fill="#3c3b6e"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div id="canvas">
+    <div id="world">
+      <svg id="wires" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow" markerWidth="9" markerHeight="9" refX="6.5" refY="3.2" orient="auto" markerUnits="userSpaceOnUse">
+            <path d="M0,0 L7,3.2 L0,6.4 Z" fill="var(--wire)"></path>
+          </marker>
+          <marker id="arrow-stop" markerWidth="9" markerHeight="9" refX="6.5" refY="3.2" orient="auto" markerUnits="userSpaceOnUse">
+            <path d="M0,0 L7,3.2 L0,6.4 Z" fill="var(--stop-bd)"></path>
+          </marker>
+        </defs>
+      </svg>
+    </div>
+
+    <div class="legend" id="uiLegend">
+      <div class="row"><span class="sw" style="background:var(--start-bg);border-color:var(--start)"></span><span class="lg-t"></span></div>
+      <div class="row"><span class="sw" style="background:var(--card);border-left:4px solid var(--proc-ac)"></span><span class="lg-t"></span></div>
+      <div class="row"><span class="sw dia" style="background:var(--dec-fill);border-color:var(--dec-bd)"></span><span class="lg-t"></span></div>
+      <div class="row"><span class="sw" style="background:var(--act-bg);border-color:var(--act-bd)"></span><span class="lg-t"></span></div>
+      <div class="row"><span class="sw" style="background:var(--stop-bg);border-color:var(--stop-bd)"></span><span class="lg-t"></span></div>
+    </div>
+
+    <div class="controls">
+      <button class="fitbtn" id="fit"></button>
+      <div class="zoombox">
+        <button id="zout">−</button>
+        <div class="pct" id="pct">100%</div>
+        <button id="zin">+</button>
+      </div>
+    </div>
+  </div>
+
+  <aside id="drawer" aria-hidden="true">
+    <div class="dw-head">
+      <span class="dw-badge" id="dwBadge"></span>
+      <h2 class="dw-title" id="dwTitle"></h2>
+      <button class="dw-close" id="dwClose"></button>
+    </div>
+    <div class="dw-body" id="dwBody"></div>
+  </aside>
+
+<script>
+/* ================= NÓS ================= */
+const NODES = {
+  start:   {x:365, y:30,  w:210, h:56,  kind:'start', ttl:{pt:'Pipeline inicia',en:'Pipeline starts'}},
+  cfg:     {x:340, y:150, w:260, h:74,  kind:'proc',  ttl:{pt:'Carrega e valida as configurações',en:'Loads and validates the configuration'}, sub:{pt:'Confere se tudo que é obrigatório está definido',en:'Checks that everything required is defined'}},
+  dCfg:    {x:345, y:284, w:250, h:118, kind:'dec',   ttl:{pt:'A configuração está completa?',en:'Is the configuration complete?'}},
+  stopCfg: {x:770, y:307, w:240, h:74,  kind:'stop',  ttl:{pt:'Encerra a execução',en:'Stops the run'}, sub:{pt:'Informa quais itens estão faltando',en:'Reports which items are missing'}},
+  db:      {x:340, y:456, w:260, h:72,  kind:'proc',  ttl:{pt:'Prepara o acesso ao banco de dados',en:'Prepares access to the database'}},
+  dDb:     {x:345, y:562, w:250, h:118, kind:'dec',   ttl:{pt:'O banco de dados já existe?',en:'Does the database already exist?'}},
+  create:  {x:40,  y:586, w:240, h:74,  kind:'act',   ttl:{pt:'Cria o banco de dados',en:'Creates the database'}},
+  reuse:   {x:770, y:586, w:240, h:74,  kind:'act',   ttl:{pt:'Reutiliza o banco existente',en:'Reuses the existing database'}},
+  struct:  {x:325, y:760, w:290, h:78,  kind:'proc',  ttl:{pt:'Garante a estrutura dos dados brutos',en:'Ensures the raw data structure'}, sub:{pt:'Cria as tabelas de armazenamento que faltarem',en:'Creates any missing storage tables'}},
+  dMode:   {x:345, y:896, w:250, h:118, kind:'dec',   ttl:{pt:'As tabelas já têm dados?',en:'Do the tables already have data?'}},
+  inc:     {x:770, y:920, w:240, h:78,  kind:'mode',  ttl:{pt:'Carga incremental',en:'Incremental load'}, sub:{pt:'Busca só os períodos recentes',en:'Fetches only the recent periods'}},
+  found:   {x:40,  y:920, w:240, h:78,  kind:'mode',  ttl:{pt:'Carga inicial completa',en:'Full initial load'}, sub:{pt:'Traz todo o histórico disponível',en:'Brings the entire available history'}},
+  extract: {x:310, y:1096,w:320, h:86,  kind:'proc',  ttl:{pt:'Extrai as fontes e guarda os dados brutos',en:'Extracts the sources and stores the raw data'}, sub:{pt:'As 5 fontes são processadas uma após a outra',en:'The 5 sources are processed one after another'}},
+  dFail:   {x:345, y:1238,w:250, h:118, kind:'dec',   ttl:{pt:'Alguma fonte falhou?',en:'Did any source fail?'}},
+  stopFail:{x:770, y:1259,w:250, h:86,  kind:'stop',  ttl:{pt:'Interrompe tudo',en:'Stops everything'}, sub:{pt:'Nada é transformado — falha para imediatamente',en:'Nothing is transformed — it fails immediately'}},
+  transform:{x:305,y:1418,w:330, h:86,  kind:'proc',  ttl:{pt:'Transforma os dados',en:'Transforms the data'}, sub:{pt:'RAW → Silver → Rules → Gold',en:'RAW → Silver → Rules → Gold'}},
+  end:     {x:310, y:1560,w:320, h:62,  kind:'end',   ttl:{pt:'Data Warehouse limpo e organizado',en:'Clean, organized Data Warehouse'}},
+};
+
+const EDGES = [
+  ['start','bottom','cfg','top'],
+  ['cfg','bottom','dCfg','top'],
+  ['dCfg','right','stopCfg','left',null,'no',true],
+  ['dCfg','bottom','db','top',null,'yes'],
+  ['db','bottom','dDb','top'],
+  ['dDb','left','create','right',null,'no'],
+  ['dDb','right','reuse','left',null,'yes'],
+  ['create','bottom','struct','top'],
+  ['reuse','bottom','struct','top'],
+  ['struct','bottom','dMode','top'],
+  ['dMode','right','inc','left',null,'yes'],
+  ['dMode','left','found','right',null,'no'],
+  ['inc','bottom','extract','top'],
+  ['found','bottom','extract','top'],
+  ['extract','bottom','dFail','top'],
+  ['dFail','right','stopFail','left',null,'yes',true],
+  ['dFail','bottom','transform','top',null,'no'],
+  ['transform','bottom','end','top'],
+];
+
+/* ================= UI (estático) ================= */
+const UI = {
+  pt:{ sub:'Documentação do processo',
+    tabs:['Fluxo do processo','Fontes de dados','Camadas do banco','Regras & riscos'],
+    hint:'<b>Clique em uma etapa</b> para ver os detalhes · arraste para mover · role para zoom',
+    legend:['Início / fim','Etapa do processo','Decisão','Ação sobre o banco','Interrupção'],
+    fit:'Ajustar à tela', eyebrow:'Decisão', close:'✕',
+    badges:{start:'Início',end:'Fim',proc:'Etapa do processo',dec:'Decisão',act:'Ação sobre o banco',mode:'Modo de carga',stop:'Interrupção'},
+    yes:'Sim', no:'Não' },
+  en:{ sub:'Process documentation',
+    tabs:['Process flow','Data sources','Database layers','Rules & risks'],
+    hint:'<b>Click a step</b> to see details · drag to move · scroll to zoom',
+    legend:['Start / end','Process step','Decision','Action on the database','Stop'],
+    fit:'Fit to screen', eyebrow:'Decision', close:'✕',
+    badges:{start:'Start',end:'End',proc:'Process step',dec:'Decision',act:'Action on the database',mode:'Load mode',stop:'Stop'},
+    yes:'Yes', no:'No' },
+};
+const BADGE_STYLE={start:['var(--start)','var(--start-bg)'],end:['var(--end)','var(--end-bg)'],
+  proc:['var(--proc-ac)','#eef1f5'],dec:['var(--dec-ink)','var(--dec-fill)'],
+  act:['var(--act-ink)','var(--act-bg)'],mode:['var(--mode-ink)','var(--mode-bg)'],stop:['var(--stop-ink)','var(--stop-bg)']};
+
+/* ================= DETALHES ================= */
+const DETAILS = {
+pt:{
+  start:{lead:'A execução do ETL é iniciada manualmente. É possível rodar todas as fontes ou apenas um subconjunto escolhido, e em um de dois modos de carga (inicial ou incremental).'},
+  cfg:{lead:'Antes de tocar em qualquer fonte, o sistema reúne as configurações e confirma que nada obrigatório está faltando. Nenhum valor ou senha é exibido em tela.',
+    secs:[
+      {h:'De onde vêm as configurações',items:['De um arquivo de ambiente (<code>.env</code>) na raiz do projeto;','E das variáveis já definidas no sistema operacional (Windows) — que <b>têm prioridade</b> sobre o arquivo.']},
+      {h:'O que é obrigatório existir',items:['<b>Banco de dados:</b> host, porta, usuário, senha e nome do banco;','<b>Sistema da lavanderia:</b> chave de acesso (API) e identificador da empresa;','<b>Conta bancária 1:</b> usuário e senha;','<b>Conta bancária 2:</b> usuário e senha;','<b>E-mail:</b> servidor e porta (IMAP), usuário e senha;','<b>Pastas:</b> caminho base de apoio e pasta de downloads.']}
+    ]},
+  dCfg:{lead:'Ponto de decisão: todas as configurações obrigatórias foram encontradas?',
+    secs:[{h:'Sim',items:['O processo segue para preparar o banco de dados.']},{h:'Não',items:['A execução para imediatamente e informa apenas os nomes do que está faltando.']}]},
+  stopCfg:{lead:'Falta configuração obrigatória. A execução é encerrada de forma segura, antes de acessar o banco ou qualquer fonte.',
+    secs:[{h:'O que acontece',items:['Lista somente os nomes dos itens ausentes (sem expor valores);','Nenhuma fonte é acessada e nenhum navegador é aberto;','Nenhum dado é gravado.']}]},
+  db:{lead:'O sistema abre o acesso ao PostgreSQL para verificar o banco de destino. Ele conecta primeiro ao banco administrativo padrão, o que permite criar o banco de destino caso ele ainda não exista.'},
+  dDb:{lead:'Ponto de decisão: o banco de dados de destino (aquele cujo nome está na configuração) já existe no PostgreSQL?',
+    secs:[{h:'Sim',items:['Segue para reutilizar o banco existente.']},{h:'Não',items:['Segue para criar o banco do zero.']}]},
+  create:{lead:'O banco de dados de destino é criado vazio no PostgreSQL. A criação apenas monta o banco — ainda sem tabelas de dados. A estrutura interna é garantida na etapa seguinte.',
+    secs:[{h:'Importante',items:['A criação usa o nome definido na configuração;','É seguida pela etapa que garante a estrutura de armazenamento.']}]},
+  reuse:{lead:'O banco já existe e é reaproveitado exatamente como está.',
+    secs:[{h:'O que NÃO acontece',items:['Não recria o banco;','Não apaga tabelas;','Não limpa dados existentes.']}]},
+  struct:{lead:'Aqui os dois caminhos (criar ou reutilizar) se juntam. O sistema garante o espaço de armazenamento dos dados brutos, criando apenas o que estiver faltando.',
+    secs:[
+      {h:'O que é garantido',items:['Um recurso de texto para ignorar acentos na categorização financeira (<code>unaccent</code>);','O espaço de dados brutos (schema <code>raw</code>);','As <b>5 tabelas</b> de armazenamento bruto.']},
+      {h:'As cinco tabelas',items:['<code>raw.laundry_system</code> — Sistema de gestão da lavanderia;','<code>raw.bank1</code> — Conta bancária 1, conta corrente;','<code>raw.bank2</code> — Conta bancária 2, recebimentos;','<code>raw.bank1_cartao</code> — Conta bancária 1, fatura de cartão;','<code>raw.bank3</code> — Conta bancária 3, conta corrente.']},
+      {h:'Como cada registro é guardado',items:['Um identificador sequencial;','A data e hora da extração;','O conteúdo bruto em formato JSON;','Um código (hash) que evita gravar o mesmo conteúdo duas vezes.']}
+    ],
+    note:'Se uma tabela antiga já existir com formato diferente, esta etapa <b>não</b> a corrige automaticamente — isso exigiria uma migração específica.'},
+  dMode:{lead:'Ponto de decisão que define o modo de carga. O sistema olha as 5 tabelas brutas: todas já possuem pelo menos um registro?',
+    secs:[{h:'Sim → carga incremental',items:['Busca apenas os períodos mais recentes.']},{h:'Não → carga inicial completa',items:['Traz todo o histórico disponível.']}]},
+  inc:{lead:'Modo incremental: escolhido quando todas as tabelas brutas já têm dados. Em vez de buscar tudo de novo, o sistema traz apenas o que é novo.',
+    secs:[{h:'Como a janela de tempo é definida',items:[
+      'Para cada fonte, o sistema olha o <b>registro mais recente já carregado</b> — pela data/hora (o timestamp) da última extração bem-sucedida;',
+      'A partir desse ponto, monta uma <b>janela de extração</b> que vai daquela data até o momento atual;',
+      'A busca traz somente esse intervalo — ou seja, apenas os períodos <b>posteriores</b> ao que já existe no banco.']}],
+    note:'Assim, cada execução avança a partir de onde a anterior parou, sem reprocessar todo o histórico.'},
+  found:{lead:'Modo inicial (foundation): escolhido quando o espaço de dados é novo ou alguma tabela ainda está vazia. Faz uma carga ampla, trazendo todo o histórico.',
+    note:'<b>Atenção:</b> como a regra exige dados em <b>todas</b> as tabelas, uma fonte legitimamente vazia pode manter o sistema sempre em carga inicial.'},
+  extract:{lead:'Cada fonte é extraída e tem seu conteúdo guardado na camada bruta (RAW). As 5 fontes rodam em sequência, uma após a outra (nunca em paralelo).',
+    secs:[
+      {h:'As fontes, na ordem',items:[
+        '<b>1. Sistema de gestão da lavanderia</b> — por integração direta (API); traz vendas, máquinas, lavanderias e clientes;',
+        '<b>2. Conta bancária 1 — Conta corrente</b> — automação do internet banking, baixa o extrato em Excel;',
+        '<b>3. Conta bancária 2 — Recebimentos</b> — solicita o relatório no portal, que chega por e-mail e é baixado;',
+        '<b>4. Conta bancária 1 — Fatura de cartão</b> — lê PDFs de fatura colocados manualmente em uma pasta;',
+        '<b>5. Conta bancária 3 — Conta corrente</b> — lê um arquivo baixado manualmente.']},
+      {h:'Como cada registro é guardado',items:[
+        'O conteúdo entra como um <b>payload JSON</b>, preservando o formato original da fonte;',
+        'Para cada registro é criado um <b>hash</b> (uma impressão digital do conteúdo);',
+        'Esse hash é montado a partir dos <b>campos e valores do próprio registro</b> — e <b>não</b> considera a data/hora da extração;',
+        'Por isso, se o mesmo dado for extraído de novo, ele gera o mesmo hash e não é gravado em duplicidade.']}
+    ]},
+  dFail:{lead:'Ponto de decisão: alguma das fontes falhou durante a extração?',
+    secs:[{h:'Sim',items:['Interrompe tudo na hora (comportamento "fail-fast").']},{h:'Não',items:['Segue para transformar os dados.']}]},
+  stopFail:{lead:'Uma fonte falhou. O processo para imediatamente.',
+    secs:[{h:'Consequência',items:['As fontes seguintes não são executadas;','A transformação (Silver, Rules e Gold) não acontece;','Evita que uma execução "aparentemente concluída" esconda uma falha no meio.']}]},
+  transform:{lead:'Os dados brutos já foram carregados na camada RAW. Agora eles atravessam as camadas de transformação, cada uma com um papel — do bruto até a base analítica final.',
+    secs:[{h:'As quatro camadas, em ordem',items:[
+      '<b>RAW</b> — a cópia bruta que acabou de ser carregada (payload JSON preservado para auditoria e reprocessamento);',
+      '<b>Silver</b> — organiza o bruto em tabelas limpas, com colunas e tipos definidos (datas, números e textos padronizados);',
+      '<b>Rules</b> — carrega as regras de categorização: padrões, categorias padronizadas e ajustes manuais;',
+      '<b>Gold</b> — a base analítica final: dimensões e fatos, com as transações financeiras categorizadas e cada venda ligada ao seu recebimento.']}],
+    note:'A ordem é obrigatória: <b>Silver → Rules → Gold</b>. Cada camada depende da anterior.'},
+  end:{lead:'Fim do ETL. O resultado é um banco de dados analítico no formato de Data Warehouse: limpo, organizado e pronto para uso.',
+    secs:[{h:'O que fica pronto',items:[
+      'Um modelo com dimensões e fatos (a camada Gold), consistente e categorizado;',
+      'Dados operacionais e financeiros já integrados e reconciliados;',
+      'Pronto para ser consumido por ferramentas de análise, como o Power BI, que constroem modelo, medidas e visuais sobre ele.']}]},
+},
+en:{
+  start:{lead:'The ETL run is started manually. You can run all sources or just a chosen subset, in one of two load modes (initial or incremental).'},
+  cfg:{lead:'Before touching any source, the system gathers the configuration and confirms nothing required is missing. No value or password is shown on screen.',
+    secs:[
+      {h:'Where the configuration comes from',items:['From an environment file (<code>.env</code>) at the project root;','And from variables already set in the operating system (Windows) — which <b>take precedence</b> over the file.']},
+      {h:'What must be present',items:['<b>Database:</b> host, port, user, password and database name;','<b>Laundry system:</b> access key (API) and company identifier;','<b>Bank account 1:</b> user and password;','<b>Bank account 2:</b> user and password;','<b>E-mail:</b> server and port (IMAP), user and password;','<b>Folders:</b> base support path and downloads folder.']}
+    ]},
+  dCfg:{lead:'Decision point: were all the required settings found?',
+    secs:[{h:'Yes',items:['The process moves on to prepare the database.']},{h:'No',items:['The run stops immediately and reports only the names of what is missing.']}]},
+  stopCfg:{lead:'A required setting is missing. The run ends safely, before accessing the database or any source.',
+    secs:[{h:'What happens',items:['Lists only the names of the missing items (without exposing values);','No source is accessed and no browser is opened;','No data is written.']}]},
+  db:{lead:'The system opens access to PostgreSQL to check the target database. It connects first to the default administrative database, which lets it create the target if it does not yet exist.'},
+  dDb:{lead:'Decision point: does the target database (the one named in the configuration) already exist in PostgreSQL?',
+    secs:[{h:'Yes',items:['Moves on to reuse the existing database.']},{h:'No',items:['Moves on to create the database from scratch.']}]},
+  create:{lead:'The target database is created empty in PostgreSQL. Creation only sets up the database — with no data tables yet. Its internal structure is ensured in the next step.',
+    secs:[{h:'Important',items:['Creation uses the name defined in the configuration;','It is followed by the step that ensures the storage structure.']}]},
+  reuse:{lead:'The database already exists and is reused exactly as it is.',
+    secs:[{h:'What does NOT happen',items:['It does not recreate the database;','It does not drop tables;','It does not clear existing data.']}]},
+  struct:{lead:'Here the two paths (create or reuse) merge. The system ensures the raw storage space, creating only what is missing.',
+    secs:[
+      {h:'What is ensured',items:['A text feature to ignore accents in financial categorization (<code>unaccent</code>);','The raw data space (the <code>raw</code> schema);','The <b>5 tables</b> for raw storage.']},
+      {h:'The five tables',items:['<code>raw.laundry_system</code> — Laundry management system;','<code>raw.bank1</code> — Bank account 1, checking account;','<code>raw.bank2</code> — Bank account 2, receivables;','<code>raw.bank1_cartao</code> — Bank account 1, card statement;','<code>raw.bank3</code> — Bank account 3, checking account.']},
+      {h:'How each record is stored',items:['A sequential identifier;','The extraction date and time;','The raw content in JSON format;','A code (hash) that prevents storing the same content twice.']}
+    ],
+    note:'If an old table already exists with a different shape, this step does <b>not</b> fix it automatically — that would require a specific migration.'},
+  dMode:{lead:'Decision point that sets the load mode. The system looks at the 5 raw tables: do all of them already hold at least one record?',
+    secs:[{h:'Yes → incremental load',items:['Fetches only the most recent periods.']},{h:'No → full initial load',items:['Brings the entire available history.']}]},
+  inc:{lead:'Incremental mode: chosen when all raw tables already have data. Instead of fetching everything again, the system brings only what is new.',
+    secs:[{h:'How the time window is defined',items:[
+      'For each source, the system looks at the <b>most recent record already loaded</b> — by the date/time (timestamp) of the last successful extraction;',
+      'From that point, it builds an <b>extraction window</b> running from that date up to the present moment;',
+      'The query fetches only that interval — that is, only the periods <b>after</b> what already exists in the database.']}],
+    note:'This way each run continues from where the previous one stopped, without reprocessing the entire history.'},
+  found:{lead:'Initial (foundation) mode: chosen when the data space is new or some table is still empty. It runs a broad load, bringing the whole history.',
+    note:'<b>Note:</b> since the rule requires data in <b>all</b> tables, a legitimately empty source can keep the system permanently in initial load.'},
+  extract:{lead:'Each source is extracted and its content is stored in the raw layer (RAW). The 5 sources run in sequence, one after another (never in parallel).',
+    secs:[
+      {h:'The sources, in order',items:[
+        '<b>1. Laundry management system</b> — via direct integration (API); brings sales, machines, stores and customers;',
+        '<b>2. Bank account 1 — Checking account</b> — internet-banking automation, downloads the statement as Excel;',
+        '<b>3. Bank account 2 — Receivables</b> — requests the report in the portal, which arrives by e-mail and is downloaded;',
+        '<b>4. Bank account 1 — Card statement</b> — reads statement PDFs placed manually in a folder;',
+        '<b>5. Bank account 3 — Checking account</b> — reads a file downloaded manually.']},
+      {h:'How each record is stored',items:[
+        'The content is stored as a <b>JSON payload</b>, preserving the source\u2019s original format;',
+        'For each record a <b>hash</b> is created (a fingerprint of the content);',
+        'This hash is built from the <b>record\u2019s own fields and values</b> — and does <b>not</b> include the extraction date/time;',
+        'So if the same data is extracted again, it produces the same hash and is not stored twice.']}
+    ]},
+  dFail:{lead:'Decision point: did any of the sources fail during extraction?',
+    secs:[{h:'Yes',items:['Stops everything right away ("fail-fast" behavior).']},{h:'No',items:['Moves on to transform the data.']}]},
+  stopFail:{lead:'A source failed. The process stops immediately.',
+    secs:[{h:'Consequence',items:['The remaining sources are not run;','The transformation (Silver, Rules and Gold) does not happen;','It prevents a "seemingly finished" run from hiding a failure in the middle.']}]},
+  transform:{lead:'The raw data has already been loaded into the RAW layer. Now it moves through the transformation layers, each with a role — from raw to the final analytical base.',
+    secs:[{h:'The four layers, in order',items:[
+      '<b>RAW</b> — the raw copy just loaded (JSON payload preserved for auditing and reprocessing);',
+      '<b>Silver</b> — organizes the raw content into clean tables, with defined columns and types (dates, numbers and standardized text);',
+      '<b>Rules</b> — loads the categorization rules: patterns, standardized categories and manual adjustments;',
+      '<b>Gold</b> — the final analytical base: dimensions and facts, with financial transactions categorized and each sale linked to its receivable.']}],
+    note:'The order is mandatory: <b>Silver → Rules → Gold</b>. Each layer depends on the previous one.'},
+  end:{lead:'End of the ETL. The result is an analytical database in Data Warehouse form: clean, organized and ready to use.',
+    secs:[{h:'What is ready',items:[
+      'A model with dimensions and facts (the Gold layer), consistent and categorized;',
+      'Operational and financial data already integrated and reconciled;',
+      'Ready to be consumed by analytics tools, such as Power BI, which build the model, measures and visuals on top of it.']}]},
+}
+};
+
+/* ================= RENDER ================= */
+let LANG='pt';
+const world=document.getElementById('world'), svg=document.getElementById('wires');
+const NS='http://www.w3.org/2000/svg';
+
+let maxX=0,maxY=0;
+for(const k in NODES){const n=NODES[k];maxX=Math.max(maxX,n.x+n.w);maxY=Math.max(maxY,n.y+n.h);}
+const W=maxX+60,H=maxY+60;
+world.style.width=W+'px';world.style.height=H+'px';
+svg.setAttribute('width',W);svg.setAttribute('height',H);svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+
+function anchor(n,s){const cx=n.x+n.w/2,cy=n.y+n.h/2;
+  return s==='top'?{x:cx,y:n.y}:s==='bottom'?{x:cx,y:n.y+n.h}:s==='left'?{x:n.x,y:cy}:{x:n.x+n.w,y:cy};}
+function points(a,b,as,bs){
+  if(as==='bottom'&&bs==='top'){ if(Math.abs(a.x-b.x)<1)return[a,b];
+    const my=(a.y+b.y)/2;return[a,{x:a.x,y:my},{x:b.x,y:my},b];}
+  if((as==='right'&&bs==='left')||(as==='left'&&bs==='right')){ if(Math.abs(a.y-b.y)<1)return[a,b];
+    const mx=(a.x+b.x)/2;return[a,{x:mx,y:a.y},{x:mx,y:b.y},b];}
+  return[a,b];
+}
+function roundPath(pts,r){
+  if(pts.length<3)return`M${pts[0].x},${pts[0].y} L${pts[pts.length-1].x},${pts[pts.length-1].y}`;
+  let d=`M${pts[0].x},${pts[0].y}`;
+  for(let i=1;i<pts.length-1;i++){const p0=pts[i-1],p1=pts[i],p2=pts[i+1];
+    const v1={x:p1.x-p0.x,y:p1.y-p0.y},v2={x:p2.x-p1.x,y:p2.y-p1.y};
+    const l1=Math.hypot(v1.x,v1.y)||1,l2=Math.hypot(v2.x,v2.y)||1;const rr=Math.min(r,l1/2,l2/2);
+    const A={x:p1.x-v1.x/l1*rr,y:p1.y-v1.y/l1*rr},B={x:p1.x+v2.x/l2*rr,y:p1.y+v2.y/l2*rr};
+    d+=` L${A.x},${A.y} Q${p1.x},${p1.y} ${B.x},${B.y}`;}
+  const last=pts[pts.length-1];d+=` L${last.x},${last.y}`;return d;
+}
+
+const edgeLabels=[];
+EDGES.forEach((e,i)=>{
+  const[f,fs,t,ts,,tone,stop]=e;
+  const a=anchor(NODES[f],fs),b=anchor(NODES[t],ts),pts=points(a,b,fs,ts);
+  const p=document.createElementNS(NS,'path');
+  p.setAttribute('d',roundPath(pts,16));
+  p.setAttribute('class','wpath'+(stop?' stop':''));
+  p.setAttribute('marker-end',stop?'url(#arrow-stop)':'url(#arrow)');
+  p.style.animationDelay=(0.2+i*0.045)+'s';svg.appendChild(p);
+  if(tone){
+    const l=document.createElement('div');l.className='elbl '+tone;
+    l.style.left=((pts[0].x+pts[1].x)/2)+'px';l.style.top=((pts[0].y+pts[1].y)/2)+'px';
+    l.style.animationDelay=(0.4+i*0.045)+'s';world.appendChild(l);
+    edgeLabels.push({el:l,tone});
+  }
+});
+
+const clsFor={start:'n-term n-start',end:'n-term n-end',proc:'n-proc',act:'n-act',mode:'n-mode',stop:'n-stop',dec:'n-dec'};
+let ni=0;
+for(const k in NODES){
+  const n=NODES[k];
+  const el=document.createElement('div');
+  el.className='node '+clsFor[n.kind];el.dataset.id=k;
+  el.style.left=n.x+'px';el.style.top=n.y+'px';el.style.width=n.w+'px';el.style.height=n.h+'px';
+  el.style.animationDelay=(ni*0.055)+'s';ni++;
+  if(n.kind==='dec'){
+    el.innerHTML='<div class="inner"><span class="eye"></span><div class="ttl"></div><span class="diamark">＋</span></div>';
+    n._eyeEl=el.querySelector('.eye');
+  }else{
+    el.innerHTML='<div class="ttl"></div>'+(n.sub?'<div class="sub"></div>':'')+'<span class="plus">＋</span>';
+  }
+  n._ttlEl=el.querySelector('.ttl');
+  n._subEl=el.querySelector('.sub');
+  el.addEventListener('click',ev=>{ev.stopPropagation();open(k,el);});
+  world.appendChild(el);n._el=el;
+}
+
+/* ================= DRAWER ================= */
+const drawer=document.getElementById('drawer');
+const dwBadge=document.getElementById('dwBadge'),dwTitle=document.getElementById('dwTitle'),dwBody=document.getElementById('dwBody');
+let activeEl=null,activeId=null;
+function fillDrawer(id){
+  const n=NODES[id],d=(DETAILS[LANG][id])||{lead:''};
+  const[col,bg]=BADGE_STYLE[n.kind];
+  dwBadge.textContent=UI[LANG].badges[n.kind];dwBadge.style.color=col;dwBadge.style.background=bg;
+  dwTitle.textContent=n.ttl[LANG];
+  let html='<p class="dw-lead">'+(d.lead||'')+'</p>';
+  (d.secs||[]).forEach(s=>{html+='<div class="dw-sec"><h4>'+s.h+'</h4><ul>'+s.items.map(it=>'<li>'+it+'</li>').join('')+'</ul></div>';});
+  if(d.note)html+='<div class="dw-note">'+d.note+'</div>';
+  dwBody.innerHTML=html;dwBody.scrollTop=0;
+}
+function open(id,el){
+  activeId=id;fillDrawer(id);
+  drawer.classList.add('open');drawer.setAttribute('aria-hidden','false');
+  if(activeEl)activeEl.classList.remove('active');
+  el.classList.add('active');activeEl=el;focus(NODES[id]);
+}
+function closeDrawer(){
+  drawer.classList.remove('open');drawer.setAttribute('aria-hidden','true');
+  if(activeEl){activeEl.classList.remove('active');activeEl=null;}activeId=null;
+}
+document.getElementById('dwClose').onclick=closeDrawer;
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer();});
+
+/* ================= IDIOMA ================= */
+function applyLang(){
+  document.body.classList.toggle('en',LANG==='en');
+  document.documentElement.lang = LANG==='en'?'en':'pt-BR';
+  const u=UI[LANG];
+  document.getElementById('uiSub').textContent=u.sub;
+  const tabEls=document.querySelectorAll('#uiTabs .tab span');
+  tabEls.forEach((s,i)=>s.textContent=u.tabs[i]);
+  document.getElementById('uiHint').innerHTML=u.hint;
+  document.querySelectorAll('#uiLegend .lg-t').forEach((s,i)=>s.textContent=u.legend[i]);
+  document.getElementById('fit').textContent=u.fit;
+  document.getElementById('dwClose').textContent=u.close;
+  for(const k in NODES){const n=NODES[k];
+    if(n._ttlEl)n._ttlEl.textContent=n.ttl[LANG];
+    if(n._subEl&&n.sub)n._subEl.textContent=n.sub[LANG];
+    if(n._eyeEl)n._eyeEl.textContent=u.eyebrow;}
+  edgeLabels.forEach(o=>o.el.textContent=(o.tone==='yes'?u.yes:u.no));
+  if(activeId)fillDrawer(activeId);
+}
+function setLang(l){
+  if(l===LANG)return;LANG=l;
+  document.querySelectorAll('.flag').forEach(b=>b.classList.toggle('active',b.dataset.lang===l));
+  applyLang();
+}
+document.querySelectorAll('.flag').forEach(b=>b.addEventListener('click',()=>setLang(b.dataset.lang)));
+
+/* ================= PAN / ZOOM ================= */
+const canvas=document.getElementById('canvas'),pct=document.getElementById('pct');
+let scale=1,tx=0,ty=0;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function apply(){world.style.transform=`translate(${tx}px,${ty}px) scale(${scale})`;pct.textContent=Math.round(scale*100)+'%';}
+function initialView(){
+  const vw=canvas.clientWidth;
+  scale=clamp(Math.min(1.05,(vw-56)/780),0.55,1.1);
+  tx=vw/2-470*scale;ty=24;apply();
+}
+function fit(){
+  const vw=canvas.clientWidth,vh=canvas.clientHeight;
+  scale=clamp(Math.min(vw/W,vh/H)*0.92,0.3,1.4);
+  tx=(vw-W*scale)/2;ty=(vh-H*scale)/2+4;apply();
+}
+function focus(n){
+  const cx=n.x+n.w/2,cy=n.y+n.h/2,vw=canvas.clientWidth,vh=canvas.clientHeight;
+  const rightRoom=Math.min(400,vw*0.88);
+  tx=(vw-rightRoom)*0.5-cx*scale;ty=vh*0.44-cy*scale;
+  world.style.transition='transform .5s cubic-bezier(.2,.7,.3,1)';apply();
+  setTimeout(()=>{world.style.transition='';},520);
+}
+function zoomAt(ns,mx,my){ns=clamp(ns,0.3,2.4);
+  const wx=(mx-tx)/scale,wy=(my-ty)/scale;scale=ns;tx=mx-wx*scale;ty=my-wy*scale;apply();}
+document.getElementById('zin').onclick=()=>zoomAt(scale*1.2,canvas.clientWidth/2,canvas.clientHeight/2);
+document.getElementById('zout').onclick=()=>zoomAt(scale/1.2,canvas.clientWidth/2,canvas.clientHeight/2);
+document.getElementById('fit').onclick=fit;
+canvas.addEventListener('wheel',e=>{e.preventDefault();
+  const r=canvas.getBoundingClientRect(),factor=e.ctrlKey?0.012:0.0016;
+  zoomAt(scale*(1-e.deltaY*factor),e.clientX-r.left,e.clientY-r.top);},{passive:false});
+let drag=false,moved=false,sx,sy,ox,oy;
+canvas.addEventListener('pointerdown',e=>{
+  if(e.target.closest('button')||e.target.closest('.node'))return;
+  drag=true;moved=false;sx=e.clientX;sy=e.clientY;ox=tx;oy=ty;
+  canvas.classList.add('grabbing');canvas.setPointerCapture(e.pointerId);});
+canvas.addEventListener('pointermove',e=>{if(!drag)return;
+  tx=ox+(e.clientX-sx);ty=oy+(e.clientY-sy);
+  if(Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy)>4)moved=true;apply();});
+function endDrag(){if(drag&&!moved)closeDrawer();drag=false;canvas.classList.remove('grabbing');}
+canvas.addEventListener('pointerup',endDrag);
+canvas.addEventListener('pointercancel',endDrag);
+
+applyLang();
+initialView();
+</script>
+</body>
+</html>
