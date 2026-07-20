@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lavesecexpress_etl"
-version = "0.1.0"
+version = "1.0.0"
 description = "ETL de uma lavanderia de autoatendimento: consolida o sistema de gestão da lavanderia e os bancos parceiros em PostgreSQL nas camadas RAW/SILVER/RULES/GOLD."
 readme = "README.md"
 requires-python = ">=3.10"
