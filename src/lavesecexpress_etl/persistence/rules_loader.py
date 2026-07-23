@@ -68,9 +68,9 @@ regexpadrao_detalhes_transacoes = """
 
 padronizacao_categorias_transacoes = """
 INSERT INTO rules.padronizacao_categorias_transacoes
-(cd_descricao, descricao, ds_tipodebito, fl_fixo, fl_operacional, fl_diluivel, fl_recorrente, fl_custociclo)
+(cd_descricao, descricao, ds_grupo, ds_categoria, ds_detalhe, ds_tipodebito, fl_fixo, fl_operacional, fl_diluivel, fl_recorrente, fl_custociclo)
 VALUES
-(:cd_descricao,:descricao,:ds_tipodebito,:fl_fixo,:fl_operacional,:fl_diluivel,:fl_recorrente,:fl_custociclo)
+(:cd_descricao,:descricao,:ds_grupo,:ds_categoria,:ds_detalhe,:ds_tipodebito,:fl_fixo,:fl_operacional,:fl_diluivel,:fl_recorrente,:fl_custociclo)
 """
 
 
@@ -109,6 +109,9 @@ RULES_LOAD_CONFIG = [
             {
                 "cd_descricao": rn,
                 "descricao": d,
+                "ds_grupo": grupo,
+                "ds_categoria": categoria,
+                "ds_detalhe": detalhe,
                 "ds_tipodebito": t,
                 "fl_fixo": gf,
                 "fl_operacional": go,
@@ -116,7 +119,7 @@ RULES_LOAD_CONFIG = [
                 "fl_recorrente": gr,
                 "fl_custociclo": gc
             }
-            for rn, d, t, gf, go, gd, gr, gc in categorias
+            for rn, d, grupo, categoria, detalhe, t, gf, go, gd, gr, gc in categorias
         ]
     }
 ]

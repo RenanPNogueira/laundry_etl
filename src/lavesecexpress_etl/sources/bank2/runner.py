@@ -170,7 +170,9 @@ def run_bank2_extraction(
     - Este runner não acessa variáveis de ambiente diretamente.
     """
 
-    driver = iniciar_sessao_chrome(pasta_downloads)
+    # O Banco 2 não exige CAPTCHA, token ou outra interação manual. Sua
+    # sessão roda em segundo plano; os demais pipelines permanecem visíveis.
+    driver = iniciar_sessao_chrome(pasta_downloads, headless=True)
 
     try:
         # ---------------------------------------------------------

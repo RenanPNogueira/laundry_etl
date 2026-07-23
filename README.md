@@ -24,4 +24,8 @@ Copie `.env.example` para `.env` e preencha as configurações locais. O `.env` 
 python -m lavesecexpress_etl.orchestrator.execute_etl
 ```
 
+Na execução pelo terminal, uma janela permite selecionar as fontes. Todas
+começam marcadas e, após 30 segundos sem confirmação, a seleção atual é
+executada automaticamente.
+
 Consulte a [documentação técnica](docs/TECHNICAL_DOCUMENTATION.md) antes da primeira execução.

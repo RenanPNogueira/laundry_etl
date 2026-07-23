@@ -79,6 +79,7 @@ def bank1_acessar_site(driver, login_url):
     botao = WebDriverWait(driver, 15).until(
         EC.element_to_be_clickable((By.XPATH, "//a[contains(text(), 'Internet Banking')]"))
     )
+
     botao.click()
 
     time.sleep(2)

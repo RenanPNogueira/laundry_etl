@@ -97,13 +97,13 @@ def run_bank3_pipeline(engine, mode):
     # 3️⃣ Validação
     if "bank3_contacorrente" not in data:
         print("⚠️ Nenhum arquivo do Banco 3 reconhecido.")
-        return
+        return {"status": "skipped", "detail": "sem arquivo novo"}
 
     df = data["bank3_contacorrente"]
 
     if df.empty:
         print("⚠️ DataFrame vazio.")
-        return
+        return {"status": "skipped", "detail": "sem registros válidos"}
 
     # 4️⃣ Persistência
     inserted = persist_dataframe_as_payload(
