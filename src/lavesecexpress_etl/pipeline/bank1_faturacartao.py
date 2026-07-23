@@ -17,9 +17,10 @@ Fluxo executado
 ---------------
 1. Lê a pasta de PDFs configurada em BANK1_CONFIG["pasta_faturas"].
 2. Valida se a configuração e o caminho existem.
-3. Processa os PDFs usando sources.bank1.cartoes.pdf_reader.processar_pasta.
-4. Valida se o DataFrame extraído possui dados.
-5. Persiste os dados em raw.bank1_cartao usando payload JSONB.
+3. Se não houver PDFs, encerra este pipeline sem erro e preserva a RAW atual.
+4. Processa os PDFs usando sources.bank1.cartoes.pdf_reader.processar_pasta.
+5. Valida se o DataFrame extraído possui dados.
+6. Persiste os dados em raw.bank1_cartao usando payload JSONB.
 
 Observações
 -----------
@@ -57,11 +58,12 @@ def run_bank1_faturas_pipeline(engine, mode="incremental"):
     ------
     Exception
         Quando a pasta de faturas não está configurada, quando o caminho não
-        existe ou quando nenhum dado é extraído dos PDFs.
+        existe ou quando há PDFs, mas nenhum dado pode ser extraído deles.
 
     Notes
     -----
     - A entrada é uma pasta local de PDFs.
+    - Uma pasta existente sem PDFs é tratada como ausência de nova carga.
     - A extração dos PDFs é delegada ao pdf_reader.py.
     - A persistência usa payload JSONB e hashid via lavesecexpress_etl.core.
     """
@@ -77,6 +79,20 @@ def run_bank1_faturas_pipeline(engine, mode="incremental"):
 
     if not os.path.exists(pasta_pdf):
         raise Exception(f"[BANK1 FATURAS] Caminho não existe: {pasta_pdf}")
+
+    arquivos_pdf = [
+        entrada
+        for entrada in os.scandir(pasta_pdf)
+        if entrada.is_file() and entrada.name.lower().endswith(".pdf")
+    ]
+
+    if not arquivos_pdf:
+        print(
+            "[BANK1 FATURAS] Nenhum PDF encontrado. "
+            "Pipeline ignorado; dados já existentes na RAW foram preservados."
+        )
+        print("========== BANK1 FATURAS PIPELINE END (SKIPPED) ==========\n")
+        return {"status": "skipped", "detail": "sem arquivo novo"}
 
     # -----------------------------------
     # TRANSFORM

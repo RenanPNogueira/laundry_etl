@@ -70,7 +70,10 @@ CREATE TABLE IF NOT EXISTS rules.regexpadrao_detalhes_transacoes (
 padronizacao_categorias_transacoes = """
 CREATE TABLE IF NOT EXISTS rules.padronizacao_categorias_transacoes (
     cd_descricao INTEGER PRIMARY KEY
-    , descricao TEXT     
+    , descricao TEXT
+    , ds_grupo TEXT
+    , ds_categoria TEXT
+    , ds_detalhe TEXT
     , ds_tipodebito TEXT    
     , fl_fixo BOOLEAN   
     , fl_operacional BOOLEAN    
@@ -87,6 +90,14 @@ ADD COLUMN IF NOT EXISTS fl_custociclo BOOLEAN;
 """
 
 
+padronizacao_categorias_transacoes_add_hierarquia = """
+ALTER TABLE rules.padronizacao_categorias_transacoes
+ADD COLUMN IF NOT EXISTS ds_grupo TEXT,
+ADD COLUMN IF NOT EXISTS ds_categoria TEXT,
+ADD COLUMN IF NOT EXISTS ds_detalhe TEXT;
+"""
+
+
 
 #============== MAP TABLES
 rules_TABLES = [
@@ -94,6 +105,7 @@ rules_TABLES = [
     {"name": "regexpadrao_detalhes_transacoes", "ddl": regexpadrao_detalhes_transacoes},
     {"name": "padronizacao_categorias_transacoes", "ddl": padronizacao_categorias_transacoes},
     {"name": "padronizacao_categorias_transacoes_add_fl_custociclo", "ddl": padronizacao_categorias_transacoes_add_fl_custociclo},
+    {"name": "padronizacao_categorias_transacoes_add_hierarquia", "ddl": padronizacao_categorias_transacoes_add_hierarquia},
 ]
 
 

@@ -39,6 +39,23 @@ import subprocess
 import undetected_chromedriver as uc
 
 
+class SafeChrome(uc.Chrome):
+    """Chrome do UC com finalização silenciosa após encerramento explícito.
+
+    O ``undetected_chromedriver`` chama ``quit()`` novamente em ``__del__``.
+    No Windows, quando o driver já foi encerrado pelo bloco ``finally`` do
+    pipeline, essa segunda tentativa pode gerar ``WinError 6`` durante a
+    destruição do objeto. A automação continua usando ``quit()`` normalmente;
+    apenas exceções tardias do destrutor são ignoradas.
+    """
+
+    def __del__(self):
+        try:
+            super().__del__()
+        except Exception:
+            pass
+
+
 #===
 # 🔍 Detecta versão do Chrome automaticamente (Windows)
 #===
@@ -82,7 +99,7 @@ def get_chrome_major_version():
 #===
 # 🚀 Sessão Chrome STEALTH
 #===
-def iniciar_sessao_chrome(pasta_download: str):
+def iniciar_sessao_chrome(pasta_download: str, headless: bool = False):
     """
     Inicializa uma sessão Chrome configurada para automações Selenium.
 
@@ -95,6 +112,10 @@ def iniciar_sessao_chrome(pasta_download: str):
     pasta_download : str
         Caminho da pasta onde os arquivos baixados pelo navegador deverão ser
         salvos.
+
+    headless : bool, optional
+        Quando True, executa o Chrome em segundo plano, sem abrir uma janela
+        visível. O padrão False preserva os fluxos que exigem ação manual.
 
     Returns
     -------
@@ -110,7 +131,11 @@ def iniciar_sessao_chrome(pasta_download: str):
     - O driver retornado deve ser encerrado pelo processo chamador ao final da
       extração.
     """
-    print("\n🚀 Iniciando sessão Selenium para Chrome (STEALTH)...")
+    modo_execucao = "HEADLESS" if headless else "VISÍVEL"
+    print(
+        "\n🚀 Iniciando sessão Selenium para Chrome "
+        f"(STEALTH | {modo_execucao})..."
+    )
 
     # Garante que a pasta de download exista
     if not os.path.isdir(pasta_download):
@@ -127,14 +152,43 @@ def iniciar_sessao_chrome(pasta_download: str):
         "download.directory_upgrade": True,
         "safebrowsing.enabled": True,
         "credentials_enable_service": False,
-        "profile.password_manager_enabled": False
+        "profile.password_manager_enabled": False,
+        # Nega automaticamente pedidos de acesso a aplicativos, serviços e
+        # dispositivos locais. As três chaves mantêm compatibilidade com
+        # versões do Chrome anteriores e posteriores à separação das
+        # permissões de rede local e loopback.
+        "profile.default_content_setting_values.local_network": 2,
+        "profile.default_content_setting_values.loopback_network": 2,
+        "profile.default_content_setting_values.local_network_access": 2,
+        # Impede solicitações de localização geográfica durante a
+        # automação. O valor 2 corresponde a "bloquear" no Chrome.
+        "profile.default_content_setting_values.geolocation": 2,
+        # Perfil sem interrupções: bloqueia pedidos de permissão que não
+        # fazem parte do ETL. Downloads continuam permitidos pelas opções
+        # específicas configuradas acima e pelo comando CDP abaixo.
+        "profile.default_content_setting_values.notifications": 2,
+        "profile.default_content_setting_values.popups": 2,
+        "profile.default_content_setting_values.media_stream_mic": 2,
+        "profile.default_content_setting_values.media_stream_camera": 2,
+        "profile.default_content_setting_values.midi_sysex": 2,
+        "profile.default_content_setting_values.sensors": 2,
+        "profile.default_content_setting_values.clipboard": 2,
+        "profile.default_content_setting_values.usb_guard": 2,
+        "profile.default_content_setting_values.serial_guard": 2,
+        "profile.default_content_setting_values.bluetooth_guard": 2,
     }
 
     chrome_options.add_experimental_option("prefs", prefs)
 
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
     chrome_options.add_argument("--disable-infobars")
-    chrome_options.add_argument("--start-maximized")
+    if headless:
+        # Mantém o mesmo espaço visual de uma tela desktop para reduzir
+        # mudanças responsivas no posicionamento dos elementos da página.
+        chrome_options.add_argument("--headless=new")
+        chrome_options.add_argument("--window-size=1920,1080")
+    else:
+        chrome_options.add_argument("--start-maximized")
     chrome_options.add_argument("--no-first-run")
     chrome_options.add_argument("--no-default-browser-check")
     chrome_options.add_argument("--disable-extensions")
@@ -159,26 +213,40 @@ def iniciar_sessao_chrome(pasta_download: str):
     #===
     try:
         if version:
-            driver = uc.Chrome(
+            driver = SafeChrome(
                 options=chrome_options,
-                headless=False,
+                headless=headless,
                 use_subprocess=True,
                 version_main=version
             )
         else:
-            driver = uc.Chrome(
+            driver = SafeChrome(
                 options=chrome_options,
-                headless=False,
+                headless=headless,
                 use_subprocess=True
             )
 
     except Exception as e:
         print("⚠️ Falha ao iniciar com versão detectada. Tentando fallback...")
-        driver = uc.Chrome(
+        driver = SafeChrome(
             options=chrome_options,
-            headless=False,
+            headless=headless,
             use_subprocess=True
         )
+
+    if headless:
+        print("🖥️ Chrome em segundo plano com resolução 1920x1080.")
+    else:
+        # Maximização explícita: o argumento --start-maximized pode não ser
+        # respeitado pelo Chrome/UC em todas as inicializações.
+        try:
+            driver.maximize_window()
+            print("🖥️ Janela do Chrome maximizada.")
+        except Exception:
+            print(
+                "⚠️ Não foi possível maximizar a janela explicitamente; "
+                "mantendo o tamanho definido pelo Chrome."
+            )
 
     # Pequeno delay para estabilizar
     time.sleep(1.5)

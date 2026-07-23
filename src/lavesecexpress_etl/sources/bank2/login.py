@@ -148,7 +148,6 @@ def bank2_executar_login(driver, login_url, timeout=120):
     """
     Clica em 'Entrar' e aguarda o redirecionamento após autenticação no app.
     """
-    url_home = login_url
     print("➡️ Tentando clicar no botão 'Entrar'...")
 
     try:
@@ -167,14 +166,17 @@ def bank2_executar_login(driver, login_url, timeout=120):
 
     print("📲 Aguardando autenticação via app do Banco 2...")
 
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-        if driver.current_url == url_home:
-            print("✅ Login autorizado e página inicial carregada.")
-            return
-        time.sleep(1)
+    try:
+        WebDriverWait(driver, timeout).until(
+            EC.url_contains("/home")
+        )
+    except Exception as exc:
+        raise TimeoutError(
+            "⛔ Tempo limite excedido aguardando autenticação via app. "
+            "A URL /home não foi carregada."
+        ) from exc
 
-    raise TimeoutError("⛔ Tempo limite excedido aguardando autenticação via app.")
+    print("✅ Login autorizado: URL /home carregada.")
 
 
 #===

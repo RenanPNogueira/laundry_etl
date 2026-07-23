@@ -111,6 +111,39 @@ Configure todas as variáveis abaixo antes de executar (copie `.env.example` par
 
 ## 4. Como executar
 
+### Execução pelo terminal com seletor visual
+
+```powershell
+python -m lavesecexpress_etl.orchestrator.execute_etl
+```
+
+Uma janela é aberta antes das extrações com todas as fontes selecionadas. O
+usuário pode desmarcar as fontes que não deseja executar e confirmar pelo botão
+`Executar ETL`. Se nenhuma ação for realizada, após 30 segundos a seleção que
+estiver visível na janela é confirmada automaticamente.
+
+Ao cancelar ou fechar a janela, nenhuma extração é iniciada. Se todas as opções
+forem desmarcadas, o ETL também não é iniciado. Em tarefas agendadas sem acesso
+a uma interface gráfica, o orquestrador seleciona automaticamente todas as
+fontes para evitar que o processo fique bloqueado.
+
+### Tratamento global de falhas
+
+Cada fonte é executada de forma isolada. Se uma extração falhar, o erro é
+registrado e o orquestrador segue para as próximas fontes selecionadas. Depois
+de tentar todas as extrações, as transformações Silver, Rules e Gold também são
+executadas com os dados disponíveis na RAW.
+
+Ao final, o terminal exibe um resumo com quatro estados possíveis: concluído,
+falhou, sem arquivo novo e não selecionado. A transformação também aparece no
+resumo. Se qualquer fonte ou a transformação falhar, o processo termina com
+código de saída `1`, permitindo que tarefas agendadas detectem a falha mesmo
+que as etapas posteriores tenham sido tentadas.
+
+Falhas nos pré-requisitos globais — como configuração inválida, banco
+indisponível ou impossibilidade de criar a estrutura RAW — ainda interrompem a
+execução, pois nenhum pipeline pode funcionar sem essa base.
+
 ### Execução completa (todos os pipelines)
 
 ```python
@@ -179,6 +212,12 @@ O script lê PDFs de uma pasta local. **Os PDFs devem ser baixados manualmente**
 **Pasta de entrada:** `data/support/bank1_cartoes/` (relativo à raiz do projeto)
 
 Este pipeline não usa datas — processa todos os PDFs presentes na pasta a cada execução.
+
+Se a pasta existir, mas não contiver PDFs, o pipeline é ignorado sem erro. Os
+dados já gravados em `raw.bank1_cartao` são preservados e o restante do ETL
+continua normalmente. Se houver PDFs, mas nenhum registro puder ser extraído,
+o processo ainda falha para sinalizar um possível arquivo inválido ou uma
+mudança no formato da fatura.
 
 ### Banco 2 — Recebimentos (Selenium + E-mail)
 
@@ -255,6 +294,11 @@ Verifique as variáveis `PG_*` e confirme que o PostgreSQL está acessível no h
 - Verifique se o Chrome está instalado e atualizado.
 - Confirme se `USER_ID`, `BANK1_PASSWORD` ou `BANK2_PASSWORD` estão corretos.
 - Se o Banco 1 pedir token 2FA, aguarde o navegador abrir e insira o código manualmente.
+- As sessões Selenium solicitam a maximização do Chrome na configuração e
+  também executam uma maximização explícita após a abertura da janela.
+- O projeto encerra explicitamente cada driver e silencia apenas erros tardios
+  do destrutor do `undetected_chromedriver` no Windows, evitando a mensagem
+  inofensiva `WinError 6` após o término do ETL.
 
 ### Banco 2 — e-mail não chega
 
@@ -264,8 +308,8 @@ Verifique as variáveis `PG_*` e confirme que o PostgreSQL está acessível no h
 
 ### Banco 1 Faturas — nenhum dado extraído
 
-- Verifique se há arquivos PDF na pasta `bank1_cartoes`.
-- Confirme que os PDFs são exportados diretamente do portal do Banco 1 (o parser é específico para esse formato).
+- Se a pasta `bank1_cartoes` não contiver PDFs, o pipeline é apenas ignorado e o ETL continua.
+- Se houver PDFs e ocorrer erro de extração, confirme que foram exportados diretamente do portal do Banco 1, pois o parser é específico para esse formato.
 
 ### Banco 3 — nenhum arquivo encontrado
 
