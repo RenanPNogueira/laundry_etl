@@ -105,6 +105,8 @@ SELECT
 	, datatransacao AS dt_transacao
     , COALESCE(debito, credito) AS vl_transacao
     , debito IS NOT NULL AS fl_debito
+    , historico AS ds_historico
+    , NULL::text AS ds_descricao_origem
     , CONCAT(
 	    TRIM(COALESCE(documento,'')),' ',
 	    TRIM(COALESCE(historico,'')),' ',
@@ -119,8 +121,10 @@ UNION ALL
 SELECT
     ds_banco
 	, datatransacao AS dt_transacao
-    , CASE WHEN saida = 0 THEN entrada ELSE saida END AS vl_transacao
+	, CASE WHEN saida = 0 THEN entrada ELSE saida END AS vl_transacao
 	, saida <> 0 AS fl_debito
+    , NULL::text AS ds_historico
+    , descricao AS ds_descricao_origem
     , CONCAT(
 	    TRIM(COALESCE(titulo,'')),' ',
 	    TRIM(COALESCE(descricao,'')),' '
@@ -135,6 +139,8 @@ SELECT
 	, dt_transacao
 	, vl_transacao
 	, fl_debito
+	, UNACCENT(LOWER(TRIM(ds_historico))) AS ds_historico
+	, UNACCENT(LOWER(TRIM(ds_descricao_origem))) AS ds_descricao_origem
 	, UNACCENT( LOWER( texto_busca ) ) AS texto_busca
 	, saldo
 	, md5(
@@ -167,6 +173,14 @@ SELECT
 	-- , c.texto_busca AS ds_override
 	, CASE
 		WHEN a.texto_busca LIKE '%deb cartao%' AND vl_transacao = 0.01 THEN 'Ciclo Interno Lavanderia'
+		WHEN c.texto_busca IS NULL
+			AND a.fl_debito
+			AND a.ds_historico = 'doc/tedinternet'
+			AND a.vl_transacao = 8.00
+		THEN 'Tarifa DOC/TED Sisprime'
+		WHEN c.texto_busca IS NULL
+			AND a.ds_descricao_origem = 'net servicos'
+		THEN 'Conta de Internet'
 		WHEN COALESCE( c.texto_busca, b.ds_categoria ) = 'Estorno ciclos PIX' AND a.vl_transacao >= 80 THEN 'Transação não Identificada - Avaliar'
 		WHEN COALESCE( c.texto_busca, b.ds_categoria ) IS NULL THEN 'Transação não Identificada - Avaliar'
 		ELSE COALESCE( c.texto_busca, b.ds_categoria )
